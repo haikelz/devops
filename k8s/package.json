@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "scripts": {
+    "knip": "knip",
+    "prepare": "lefthook install",
+    "commitlint": "commitlint --edit"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "knip": "^5.62.0",
+    "lefthook": "^1.11.14"
+  }
+}

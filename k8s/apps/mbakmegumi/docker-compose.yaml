@@ -1,0 +1,18 @@
+services:
+  mbakmegumi:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mbakmegumi
+    image: haikelilham/mbakmegumi:latest
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true

@@ -1,0 +1,117 @@
+---
+import "@/styles/global.css";
+
+type Props = {
+  title: string;
+  description: string;
+  url: string;
+};
+
+const { title, description, url } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <title>{title}</title>
+    <meta charset="UTF-8" />
+    <meta name="title" content={title} />
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={url} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={url} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="sitemap" href="/sitemap.xml" />
+    <link rel="icon" href="/favicon.ico" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@300..900&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div
+      id="loader"
+      class="fixed inset-0 z-50 flex items-center justify-center"
+      style="background: #fafafa"
+    >
+      <div
+        class="border-4 border-[#111] bg-[#ffe658] p-6 shadow-[8px_8px_0_#111] flex flex-col items-center gap-4"
+      >
+        <img
+          id="loader-gif"
+          src="/assets/katou-megumi.gif"
+          alt="Loading"
+          class="w-80 h-48 border-[3px] border-[#111] object-cover"
+        />
+        <span
+          class="text-xs font-black uppercase tracking-[0.18em] text-[#111]"
+        >
+          Loading&hellip;
+        </span>
+      </div>
+    </div>
+
+    <!-- ── Main Content ── -->
+    <main id="main-content" class="min-h-svh w-full" style="opacity: 0">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<script>
+  import { gsap } from "gsap";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+  import Lenis from "lenis";
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  const loader = document.getElementById("loader");
+  const mainContent = document.getElementById("main-content");
+
+  if (loader && mainContent) {
+    document.body.style.overflow = "hidden";
+
+    setTimeout(() => {
+      gsap.to(loader, {
+        opacity: 0,
+        duration: 0.5,
+        ease: "power3.in",
+        onComplete: () => {
+          loader.style.display = "none";
+          document.body.style.overflow = "";
+        },
+      });
+
+      gsap.to(mainContent, {
+        opacity: 1,
+        duration: 0.6,
+        delay: 0.2,
+        ease: "power3.out",
+      });
+    }, 1800);
+  }
+
+  const lenis = new Lenis({
+    duration: 1.2,
+    easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+  });
+
+  function raf(time: number) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+
+  lenis.on("scroll", ScrollTrigger.update);
+
+  gsap.ticker.add((time: number) => {
+    lenis.raf(time * 1000);
+  });
+  gsap.ticker.lagSmoothing(0);
+</script>

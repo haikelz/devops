@@ -1,0 +1,28 @@
+services:
+  whatsapp-bot:
+    image: haikelilham/ryuko-matoi-go:latest
+    container_name: ryuko-matoi-go
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Jakarta
+      LOG_DIR: /app/logs
+      WHATSAPP_SESSION_PATH: /app/data/session
+      WHATSAPP_DATABASE_DSN: file:/app/data/whatsmeow.db?_pragma=foreign_keys(1)
+      FINANCE_DATABASE_PATH: /app/data/finance.db
+      SCHEDULE_DATABASE_PATH: /app/data/schedule.db
+      OCR_BINARY: tesseract
+    volumes:
+      - whatsapp_data:/app/data
+      - ./tmp:/app/tmp
+      - /home/ubuntu/ryuko-matoi-go/journal:/app/logs
+    networks:
+      - dokploy-network
+
+volumes:
+  whatsapp_data:
+
+networks:
+  dokploy-network:
+    external: true

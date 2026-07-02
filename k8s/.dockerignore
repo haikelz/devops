@@ -1,0 +1,48 @@
+# >>> create-ai-ignore managed
+# VCS and local tooling
+.git
+.gitignore
+.svn
+.hg
+.idea
+.vscode
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+!.env.sample
+*credential*
+*credentials*
+*secret*
+*secrets*
+*token*
+*.key
+*.pem
+*.p12
+*.pfx
+
+# AI/private workspace and evidence
+.claude
+.cursor
+.omo
+AGENTS.md
+CLAUDE.md
+prompts
+
+# Dependencies, build outputs, tests, and logs
+node_modules
+vendor
+dist
+build
+coverage
+.next
+.nuxt
+.turbo
+.cache
+logs
+*.log
+test
+tests
+__tests__
+# <<< create-ai-ignore managed

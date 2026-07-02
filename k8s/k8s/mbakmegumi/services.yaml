@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: megumi
+  labels:
+    app: megumi
+spec:
+  type: ClusterIP
+  selector:
+    app: megumi
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http

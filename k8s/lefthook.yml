@@ -1,0 +1,9 @@
+pre-push:
+  commands:
+    knip:
+      run: npm run knip
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx commitlint --edit {1}
