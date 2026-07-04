@@ -176,5 +176,4 @@ func main() {
 	if err := whatsAppService.Stop(shutdownCtx); err != nil {
 		logger.Error().Err(err).Msg("stop whatsapp service")
 	}
-
 }

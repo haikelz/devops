@@ -37,6 +37,8 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: app-logs
+          emptyDir: {}
       containers:
         - name: ryuko-matoi
           image: ${IMAGE}
@@ -51,6 +53,8 @@ spec:
               mountPath: /app/tmp
             - name: tmp
               mountPath: /tmp
+            - name: app-logs
+              mountPath: /app/logs
           resources:
             requests:
               cpu: "100m"
