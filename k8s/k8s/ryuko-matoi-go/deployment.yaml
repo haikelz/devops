@@ -15,14 +15,6 @@ spec:
         app: ryuko-matoi
     spec:
       terminationGracePeriodSeconds: 60
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 101
-        runAsGroup: 101
-        fsGroup: 101
-        fsGroupChangePolicy: OnRootMismatch
-        seccompProfile:
-          type: RuntimeDefault
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -80,12 +72,6 @@ spec:
               port: 80
             periodSeconds: 5
             failureThreshold: 12
-          securityContext:
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: false  # temporary — test if this was the blocker
-            capabilities:
-              drop:
-                - ALL
           env:
             - name: REMOVE_BG_API_KEY
               valueFrom:
