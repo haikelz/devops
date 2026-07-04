@@ -39,6 +39,27 @@ spec:
           emptyDir: {}
         - name: app-logs
           emptyDir: {}
+      initContainers:
+        - name: init-data
+          image: busybox:stable
+          command:
+            - sh
+            - -c
+            - |
+              touch /app/data/whatsmeow.db \
+                    /app/data/finance.db \
+                    /app/data/schedule.db
+              mkdir -p /app/data/session /app/logs
+              chown -R 101:101 /app/data /app/logs /app/tmp
+          volumeMounts:
+            - name: app-data
+              mountPath: /app/data
+            - name: app-tmp
+              mountPath: /app/tmp
+            - name: tmp
+              mountPath: /tmp
+            - name: app-logs
+              mountPath: /app/logs
       containers:
         - name: ryuko-matoi
           image: ${IMAGE}
