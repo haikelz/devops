@@ -86,3 +86,144 @@ spec:
             capabilities:
               drop:
                 - ALL
+          env:
+            - name: REMOVE_BG_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: REMOVE_BG_API_KEY
+            - name: REMOVE_BG_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: REMOVE_BG_API_URL
+            - name: JOKES_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: JOKES_API_URL
+            - name: ANIME_QUOTE_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: ANIME_QUOTE_API_URL
+            - name: DISTRO_INFO_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: DISTRO_INFO_API_URL
+            - name: DOA_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: DOA_API_URL
+            - name: QURAN_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: QURAN_API_URL
+            - name: IMAGE_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: IMAGE_API_URL
+            - name: ASMAUL_HUSNA_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: ASMAUL_HUSNA_API_URL
+            - name: AI_PROVIDER
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: AI_PROVIDER
+            - name: AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: AI_API_KEY
+            - name: AI_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: AI_MODEL
+            - name: APP_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: APP_NAME
+            - name: APP_ENV
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: APP_ENV
+            - name: TZ
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: TZ
+            - name: LOG_LEVEL
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: LOG_LEVEL
+            - name: LOG_DIR
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: LOG_DIR
+            - name: WHATSAPP_SESSION_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: WHATSAPP_SESSION_PATH
+            - name: WHATSAPP_DEVICE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: WHATSAPP_DEVICE_NAME
+            - name: WHATSAPP_DATABASE_DIALECT
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: WHATSAPP_DATABASE_DIALECT
+            - name: WHATSAPP_DATABASE_DSN
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: WHATSAPP_DATABASE_DSN
+            - name: WHATSAPP_PAIRING_PHONE
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: WHATSAPP_PAIRING_PHONE
+            - name: WHATSAPP_EVENT_BUFFER_SIZE
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: WHATSAPP_EVENT_BUFFER_SIZE
+            - name: OCR_PROVIDER
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: OCR_PROVIDER
+            - name: OCR_LANGUAGE
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: OCR_LANGUAGE
+            - name: OCR_BINARY
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: OCR_BINARY
+            - name: APP_ENV
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: APP_ENV
+            - name: BRAT_FONT_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: BRAT_FONT_PATH
