@@ -192,11 +192,6 @@ spec:
                 secretKeyRef:
                   name: ryuko-matoi-env
                   key: WHATSAPP_DATABASE_DSN
-            - name: WHATSAPP_PAIRING_PHONE
-              valueFrom:
-                secretKeyRef:
-                  name: ryuko-matoi-env
-                  key: WHATSAPP_PAIRING_PHONE
             - name: WHATSAPP_EVENT_BUFFER_SIZE
               valueFrom:
                 secretKeyRef:
@@ -217,11 +212,6 @@ spec:
                 secretKeyRef:
                   name: ryuko-matoi-env
                   key: OCR_BINARY
-            - name: APP_ENV
-              valueFrom:
-                secretKeyRef:
-                  name: ryuko-matoi-env
-                  key: APP_ENV
             - name: BRAT_FONT_PATH
               valueFrom:
                 secretKeyRef:
