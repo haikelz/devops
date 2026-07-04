@@ -6,8 +6,6 @@
 !.env.sample
 *credential*
 *credentials*
-*secret*
-*secrets*
 *token*
 *.key
 *.pem
