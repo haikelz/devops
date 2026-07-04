@@ -33,6 +33,7 @@ render_apply clusterissuer.yaml
 
 cd ../ryuko-matoi-go
 render_apply secret.yaml
+kubectl apply -f pvc.yaml
 kubectl apply -f services.yaml
 render_apply deployment.yaml
 render_apply ingress.yaml

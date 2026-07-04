@@ -24,7 +24,8 @@ spec:
               app: ryuko-matoi
       volumes:
         - name: app-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: ryuko-matoi-data
         - name: app-tmp
           emptyDir: {}
         - name: tmp
