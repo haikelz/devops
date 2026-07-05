@@ -24,8 +24,9 @@ spec:
               app: ryuko-matoi
       volumes:
         - name: app-data
-          persistentVolumeClaim:
-            claimName: ryuko-matoi-data
+          hostPath:
+            path: /data/ryuko-matoi
+            type: DirectoryOrCreate
         - name: app-tmp
           emptyDir: {}
         - name: tmp
@@ -51,10 +52,10 @@ spec:
           resources:
             requests:
               cpu: "100m"
-              memory: "64Mi"
+              memory: "128Mi"
             limits:
               cpu: "500m"
-              memory: "128Mi"
+              memory: "256Mi"
           livenessProbe:
             httpGet:
               path: /

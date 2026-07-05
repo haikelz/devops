@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goatcounter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: goatcounter
+  template:
+    metadata:
+      labels:
+        app: goatcounter
+    spec:
+      initContainers:
+        - name: init-goatcounter
+          image: ${IMAGE}
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f /data/goatcounter.sqlite3 ]; then
+                goatcounter db create site \
+                  -db sqlite+/data/goatcounter.sqlite3 \
+                  -vhost $(VHOST) \
+                  -user.email $(EMAIL) \
+                  -user.password $(PASSWORD)
+              fi
+          env:
+            - name: VHOST
+              valueFrom:
+                secretKeyRef:
+                  name: goat-counter-env
+                  key: VHOST
+            - name: EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: goatcounter
+                  key: email
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: goatcounter
+                  key: password
+          volumeMounts:
+            - name: goatcounter-data
+              mountPath: /data
+      containers:
+        - name: goatcounter
+          image: ${IMAGE}
+          args:
+            - serve
+            - -listen
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: goatcounter-data
+              mountPath: /data
