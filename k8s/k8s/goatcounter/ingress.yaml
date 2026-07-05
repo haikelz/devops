@@ -7,7 +7,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: analytics.ekel.dev
+    - host: ${DOMAIN}
       http:
         paths:
           - path: /
@@ -19,5 +19,5 @@ spec:
                   number: 80
   tls:
     - hosts:
-        - analytics.ekel.dev
+        - ${DOMAIN}
       secretName: goatcounter-tls
