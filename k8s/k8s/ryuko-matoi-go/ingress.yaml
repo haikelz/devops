@@ -1,55 +1,24 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
   name: ryuko-matoi
-  labels:
-    app: ryuko-matoi
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: ryuko-matoi
-  template:
-    metadata:
-      labels:
-        app: ryuko-matoi
-    spec:
-      terminationGracePeriodSeconds: 60
-      securityContext:
-        seccompProfile:
-          type: RuntimeDefault
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: ryuko-matoi
-      containers:
-        - name: ryuko-matoi
-          image: ${IMAGE}
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 80
-              name: http
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "64Mi"
-            limits:
-              cpu: "500m"
-              memory: "128Mi"
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 15
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 3
-            periodSeconds: 10
-          securityContext:
-            allowPrivilegeEscalation: false
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ${DOMAIN}
+      secretName: ryuko-matoi-tls
+  rules:
+    - host: ${DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ryuko-matoi
+                port:
+                  number: 80
