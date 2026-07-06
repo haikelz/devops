@@ -20,28 +20,28 @@ spec:
             - -c
             - |
               if [ ! -f /data/goatcounter.sqlite3 ]; then
-                goatcounter db create site \
-                  -db sqlite+/data/goatcounter.sqlite3 \
-                  -vhost $(DOMAIN) \
-                  -user.email $(EMAIL) \
-                  -user.password $(PASSWORD)
+              goatcounter db create site \
+                -db sqlite+/data/goatcounter.sqlite3 \
+                -vhost ${DOMAIN} \
+                -user.email ${EMAIL} \
+                -user.password ${PASSWORD}
               fi
           env:
             - name: DOMAIN
               valueFrom:
                 secretKeyRef:
-                  name: goat-counter-env
+                  name: goatcounter
                   key: DOMAIN
             - name: EMAIL
               valueFrom:
                 secretKeyRef:
-                  name: goat-counter-env
-                  key: email
+                  name: goatcounter
+                  key: EMAIL
             - name: PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: goat-counter-env
-                  key: password
+                  name: goatcounter
+                  key: PASSWORD
           volumeMounts:
             - name: goatcounter-data
               mountPath: /data
