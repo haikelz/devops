@@ -12,6 +12,7 @@ spec:
       labels:
         app: goatcounter
     spec:
+      enableServiceLinks: false
       initContainers:
         - name: init-goatcounter
           image: ${IMAGE}
@@ -22,7 +23,7 @@ spec:
               if [ ! -f /data/goatcounter.sqlite3 ]; then
               goatcounter db create site \
                 -createdb \
-                -db sqlite+/data/goatcounter.sqlite3 \
+                -db sqlite3+/data/goatcounter.sqlite3 \
                 -vhost ${DOMAIN} \
                 -user.email ${EMAIL} \
                 -user.password ${PASSWORD}
@@ -52,6 +53,12 @@ spec:
           args:
             - serve
             - -listen
+            - :3000
+            - -tls
+            - none
+            - -db
+            - sqlite3+/data/goatcounter.sqlite3
+            - -automigrate
           ports:
             - containerPort: 3000
           volumeMounts:
