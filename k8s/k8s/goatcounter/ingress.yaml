@@ -3,9 +3,10 @@ kind: Ingress
 metadata:
   name: goatcounter
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   rules:
     - host: ${DOMAIN}
       http:
