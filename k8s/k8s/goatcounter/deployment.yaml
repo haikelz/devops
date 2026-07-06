@@ -21,6 +21,7 @@ spec:
             - |
               if [ ! -f /data/goatcounter.sqlite3 ]; then
               goatcounter db create site \
+                -createdb \
                 -db sqlite+/data/goatcounter.sqlite3 \
                 -vhost ${DOMAIN} \
                 -user.email ${EMAIL} \
