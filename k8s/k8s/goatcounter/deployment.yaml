@@ -30,17 +30,17 @@ spec:
             - name: DOMAIN
               valueFrom:
                 secretKeyRef:
-                  name: goatcounter
+                  name: goatcounter-env
                   key: DOMAIN
             - name: EMAIL
               valueFrom:
                 secretKeyRef:
-                  name: goatcounter
+                  name: goatcounter-env
                   key: EMAIL
             - name: PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: goatcounter
+                  name: goatcounter-env
                   key: PASSWORD
           volumeMounts:
             - name: goatcounter-data
