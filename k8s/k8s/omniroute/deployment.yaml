@@ -1,0 +1,138 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omniroute-redis
+  labels:
+    app: omniroute-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: omniroute-redis
+  template:
+    metadata:
+      labels:
+        app: omniroute-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command:
+            - redis-server
+            - --save
+            - "60"
+            - "1"
+            - --loglevel
+            - warning
+          ports:
+            - containerPort: 6379
+              name: redis
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omniroute
+  labels:
+    app: omniroute
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: omniroute
+  template:
+    metadata:
+      labels:
+        app: omniroute
+    spec:
+      terminationGracePeriodSeconds: 40
+      enableServiceLinks: false
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: omniroute-data
+      containers:
+        - name: omniroute
+          image: ${IMAGE}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 20128
+              name: http
+          env:
+            - name: PORT
+              valueFrom:
+                secretKeyRef:
+                  name: omniroute-env
+                  key: PORT
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: omniroute-env
+                  key: REDIS_URL
+            - name: NEXT_PUBLIC_BASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: omniroute-env
+                  key: NEXT_PUBLIC_BASE_URL
+            - name: OMNIROUTE_WS_BRIDGE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: omniroute-env
+                  key: OMNIROUTE_WS_BRIDGE_SECRET
+            - name: DATA_DIR
+              valueFrom:
+                secretKeyRef:
+                  name: omniroute-env
+                  key: DATA_DIR
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          livenessProbe:
+            exec:
+              command:
+                - node
+                - healthcheck.mjs
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+                - node
+                - healthcheck.mjs
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          startupProbe:
+            exec:
+              command:
+                - node
+                - healthcheck.mjs
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 12
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

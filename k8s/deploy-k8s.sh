@@ -60,6 +60,12 @@ case "$app_name" in
     apply_order=(secret services deployment ingress)
     has_clusterissuer=1
     ;;
+  omniroute)
+    required_vars=(DOMAIN IMAGE OMNIROUTE_WS_BRIDGE_SECRET)
+    k8s_dir="omniroute"
+    apply_order=(pvc secret services deployment ingress)
+    has_clusterissuer=1
+    ;;
   ryuko-matoi-go)
     required_vars=(IMAGE)
     k8s_dir="ryuko-matoi-go"
