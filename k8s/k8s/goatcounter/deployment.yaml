@@ -75,6 +75,8 @@ spec:
             - -db
             - sqlite3+/data/goatcounter.sqlite3
             - -automigrate
+            - -email-from
+            - ${EMAIL}
           ports:
             - containerPort: 3000
           volumeMounts:
