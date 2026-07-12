@@ -108,24 +108,21 @@ spec:
             - name: data
               mountPath: /app/data
           livenessProbe:
-            exec:
-              command:
-                - node
-                - healthcheck.mjs
+            httpGet:
+              path: /
+              port: 20128
             initialDelaySeconds: 30
             periodSeconds: 30
           readinessProbe:
-            exec:
-              command:
-                - node
-                - healthcheck.mjs
+            httpGet:
+              path: /
+              port: 20128
             initialDelaySeconds: 15
             periodSeconds: 15
           startupProbe:
-            exec:
-              command:
-                - node
-                - healthcheck.mjs
+            httpGet:
+              path: /
+              port: 20128
             initialDelaySeconds: 15
             periodSeconds: 10
             failureThreshold: 12
