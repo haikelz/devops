@@ -69,8 +69,8 @@ case "$app_name" in
   ryuko-matoi-go)
     required_vars=(IMAGE)
     k8s_dir="ryuko-matoi-go"
-    apply_order=(pvc secret services deployment ingress)
-    has_clusterissuer=1
+    apply_order=(pvc secret services deployment)
+    has_clusterissuer=0
     ;;
   umami)
     required_vars=(POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB APP_SECRET DOMAIN EMAIL TRACKER_SCRIPT_NAME)
