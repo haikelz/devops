@@ -56,24 +56,6 @@ spec:
             limits:
               cpu: "500m"
               memory: "256Mi"
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 5
-            periodSeconds: 15
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 80
-            initialDelaySeconds: 3
-            periodSeconds: 10
-          startupProbe:
-            httpGet:
-              path: /
-              port: 80
-            periodSeconds: 5
-            failureThreshold: 12
           env:
             - name: REMOVE_BG_API_KEY
               valueFrom:
