@@ -1,0 +1,367 @@
+basePath: /api/v1
+definitions:
+  ekel-backend_internal_domains_guestbook.CreateGuestbookRequest:
+    properties:
+      message:
+        maxLength: 2000
+        minLength: 10
+        type: string
+      username:
+        maxLength: 255
+        minLength: 2
+        type: string
+    required:
+    - message
+    - username
+    type: object
+  ekel-backend_internal_domains_guestbook.GuestbookResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      message:
+        type: string
+      username:
+        type: string
+    type: object
+  ekel-backend_internal_domains_guestbook.UpdateGuestbookRequest:
+    properties:
+      message:
+        maxLength: 2000
+        minLength: 10
+        type: string
+      username:
+        maxLength: 255
+        minLength: 2
+        type: string
+    required:
+    - message
+    - username
+    type: object
+  ekel-backend_internal_domains_wakatime.CategoryStat:
+    properties:
+      digital:
+        type: string
+      hours:
+        type: integer
+      minutes:
+        type: integer
+      name:
+        type: string
+      percent:
+        type: number
+      text:
+        type: string
+      total_seconds:
+        type: number
+    type: object
+  ekel-backend_internal_domains_wakatime.EditorStat:
+    properties:
+      digital:
+        type: string
+      hours:
+        type: integer
+      minutes:
+        type: integer
+      name:
+        type: string
+      percent:
+        type: number
+      text:
+        type: string
+      total_seconds:
+        type: number
+    type: object
+  ekel-backend_internal_domains_wakatime.LangStat:
+    properties:
+      digital:
+        type: string
+      hours:
+        type: integer
+      minutes:
+        type: integer
+      name:
+        type: string
+      percent:
+        type: number
+      text:
+        type: string
+      total_seconds:
+        type: number
+    type: object
+  ekel-backend_internal_domains_wakatime.OSStat:
+    properties:
+      digital:
+        type: string
+      hours:
+        type: integer
+      minutes:
+        type: integer
+      name:
+        type: string
+      percent:
+        type: number
+      text:
+        type: string
+      total_seconds:
+        type: number
+    type: object
+  ekel-backend_internal_domains_wakatime.ProjectStat:
+    properties:
+      digital:
+        type: string
+      hours:
+        type: integer
+      minutes:
+        type: integer
+      name:
+        type: string
+      percent:
+        type: number
+      text:
+        type: string
+      total_seconds:
+        type: number
+    type: object
+  ekel-backend_internal_domains_wakatime.StatsResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/ekel-backend_internal_domains_wakatime.CategoryStat'
+        type: array
+      daily_average:
+        type: number
+      editors:
+        items:
+          $ref: '#/definitions/ekel-backend_internal_domains_wakatime.EditorStat'
+        type: array
+      human_readable_daily_average:
+        type: string
+      human_readable_range:
+        type: string
+      human_readable_total:
+        type: string
+      is_including_today:
+        type: boolean
+      languages:
+        items:
+          $ref: '#/definitions/ekel-backend_internal_domains_wakatime.LangStat'
+        type: array
+      operating_systems:
+        items:
+          $ref: '#/definitions/ekel-backend_internal_domains_wakatime.OSStat'
+        type: array
+      projects:
+        items:
+          $ref: '#/definitions/ekel-backend_internal_domains_wakatime.ProjectStat'
+        type: array
+      range:
+        type: string
+      total_seconds:
+        type: number
+    type: object
+  ekel-backend_internal_models.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:9090
+info:
+  contact: {}
+  description: API for Wakatime stats, IHSG market data, and Guestbook.
+  title: Ekel Backend API
+  version: "1.0"
+paths:
+  /api/v1/guestbook:
+    get:
+      consumes:
+      - application/json
+      description: Returns all guestbook entries, newest first.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+      summary: List guestbook entries
+      tags:
+      - Guestbook
+    post:
+      consumes:
+      - application/json
+      description: Create a new guestbook entry with name, email, and message.
+      parameters:
+      - description: Guestbook Entry
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ekel-backend_internal_domains_guestbook.CreateGuestbookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/ekel-backend_internal_models.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ekel-backend_internal_domains_guestbook.GuestbookResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+      summary: Create a guestbook entry
+      tags:
+      - Guestbook
+  /api/v1/guestbook/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a guestbook entry by ID.
+      parameters:
+      - description: Entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+      summary: Delete a guestbook entry
+      tags:
+      - Guestbook
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single guestbook entry by its ID.
+      parameters:
+      - description: Entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ekel-backend_internal_models.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ekel-backend_internal_domains_guestbook.GuestbookResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+      summary: Get a guestbook entry by ID
+      tags:
+      - Guestbook
+    put:
+      consumes:
+      - application/json
+      description: Update an existing guestbook entry by ID.
+      parameters:
+      - description: Entry ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Entry
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ekel-backend_internal_domains_guestbook.UpdateGuestbookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            allOf:
+            - $ref: '#/definitions/ekel-backend_internal_models.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ekel-backend_internal_domains_guestbook.GuestbookResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+      summary: Update a guestbook entry
+      tags:
+      - Guestbook
+  /api/v1/ihsg/markets:
+    get:
+      consumes:
+      - application/json
+      description: Fetch live market data for IHSG, Nikkei 225, S&P 500, SSE Composite,
+        and Tadawul from Yahoo Finance/Stooq. Cached for 5 minutes.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+      summary: Get live market indices
+      tags:
+      - IHSG
+  /api/v1/wakatime/stats:
+    get:
+      consumes:
+      - application/json
+      description: Fetch coding stats from Wakatime API. Use ?range=all_time (default),
+        last_7_days, or last_day.
+      parameters:
+      - description: 'Range: all_time, last_7_days, last_day'
+        in: query
+        name: range
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/ekel-backend_internal_models.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/ekel-backend_internal_domains_wakatime.StatsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ekel-backend_internal_models.Response'
+      summary: Get Wakatime coding stats
+      tags:
+      - Wakatime
+swagger: "2.0"

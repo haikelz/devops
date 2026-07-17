@@ -1,0 +1,568 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for Wakatime stats, IHSG market data, and Guestbook.",
+        "title": "Ekel Backend API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:9090",
+    "basePath": "/api/v1",
+    "paths": {
+        "/api/v1/guestbook": {
+            "get": {
+                "description": "Returns all guestbook entries, newest first.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guestbook"
+                ],
+                "summary": "List guestbook entries",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new guestbook entry with name, email, and message.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guestbook"
+                ],
+                "summary": "Create a guestbook entry",
+                "parameters": [
+                    {
+                        "description": "Guestbook Entry",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_domains_guestbook.CreateGuestbookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ekel-backend_internal_domains_guestbook.GuestbookResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/guestbook/{id}": {
+            "get": {
+                "description": "Retrieve a single guestbook entry by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guestbook"
+                ],
+                "summary": "Get a guestbook entry by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Entry ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ekel-backend_internal_domains_guestbook.GuestbookResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing guestbook entry by ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guestbook"
+                ],
+                "summary": "Update a guestbook entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Entry ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Entry",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_domains_guestbook.UpdateGuestbookRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ekel-backend_internal_domains_guestbook.GuestbookResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a guestbook entry by ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Guestbook"
+                ],
+                "summary": "Delete a guestbook entry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Entry ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/ihsg/markets": {
+            "get": {
+                "description": "Fetch live market data for IHSG, Nikkei 225, S\u0026P 500, SSE Composite, and Tadawul from Yahoo Finance/Stooq. Cached for 5 minutes.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "IHSG"
+                ],
+                "summary": "Get live market indices",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/wakatime/stats": {
+            "get": {
+                "description": "Fetch coding stats from Wakatime API. Use ?range=all_time (default), last_7_days, or last_day.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Wakatime"
+                ],
+                "summary": "Get Wakatime coding stats",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Range: all_time, last_7_days, last_day",
+                        "name": "range",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ekel-backend_internal_domains_wakatime.StatsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ekel-backend_internal_models.Response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ekel-backend_internal_domains_guestbook.CreateGuestbookRequest": {
+            "type": "object",
+            "required": [
+                "message",
+                "username"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "minLength": 10
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 2
+                }
+            }
+        },
+        "ekel-backend_internal_domains_guestbook.GuestbookResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "ekel-backend_internal_domains_guestbook.UpdateGuestbookRequest": {
+            "type": "object",
+            "required": [
+                "message",
+                "username"
+            ],
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "maxLength": 2000,
+                    "minLength": 10
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 2
+                }
+            }
+        },
+        "ekel-backend_internal_domains_wakatime.CategoryStat": {
+            "type": "object",
+            "properties": {
+                "digital": {
+                    "type": "string"
+                },
+                "hours": {
+                    "type": "integer"
+                },
+                "minutes": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "percent": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "total_seconds": {
+                    "type": "number"
+                }
+            }
+        },
+        "ekel-backend_internal_domains_wakatime.EditorStat": {
+            "type": "object",
+            "properties": {
+                "digital": {
+                    "type": "string"
+                },
+                "hours": {
+                    "type": "integer"
+                },
+                "minutes": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "percent": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "total_seconds": {
+                    "type": "number"
+                }
+            }
+        },
+        "ekel-backend_internal_domains_wakatime.LangStat": {
+            "type": "object",
+            "properties": {
+                "digital": {
+                    "type": "string"
+                },
+                "hours": {
+                    "type": "integer"
+                },
+                "minutes": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "percent": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "total_seconds": {
+                    "type": "number"
+                }
+            }
+        },
+        "ekel-backend_internal_domains_wakatime.OSStat": {
+            "type": "object",
+            "properties": {
+                "digital": {
+                    "type": "string"
+                },
+                "hours": {
+                    "type": "integer"
+                },
+                "minutes": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "percent": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "total_seconds": {
+                    "type": "number"
+                }
+            }
+        },
+        "ekel-backend_internal_domains_wakatime.ProjectStat": {
+            "type": "object",
+            "properties": {
+                "digital": {
+                    "type": "string"
+                },
+                "hours": {
+                    "type": "integer"
+                },
+                "minutes": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "percent": {
+                    "type": "number"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "total_seconds": {
+                    "type": "number"
+                }
+            }
+        },
+        "ekel-backend_internal_domains_wakatime.StatsResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ekel-backend_internal_domains_wakatime.CategoryStat"
+                    }
+                },
+                "daily_average": {
+                    "type": "number"
+                },
+                "editors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ekel-backend_internal_domains_wakatime.EditorStat"
+                    }
+                },
+                "human_readable_daily_average": {
+                    "type": "string"
+                },
+                "human_readable_range": {
+                    "type": "string"
+                },
+                "human_readable_total": {
+                    "type": "string"
+                },
+                "is_including_today": {
+                    "type": "boolean"
+                },
+                "languages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ekel-backend_internal_domains_wakatime.LangStat"
+                    }
+                },
+                "operating_systems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ekel-backend_internal_domains_wakatime.OSStat"
+                    }
+                },
+                "projects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ekel-backend_internal_domains_wakatime.ProjectStat"
+                    }
+                },
+                "range": {
+                    "type": "string"
+                },
+                "total_seconds": {
+                    "type": "number"
+                }
+            }
+        },
+        "ekel-backend_internal_models.Response": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

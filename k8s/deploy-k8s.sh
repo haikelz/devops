@@ -79,7 +79,7 @@ case "$app_name" in
     has_clusterissuer=1
     ;;
   ekel-backend)
-    required_vars=(DOMAIN IMAGE WAKATIME_API_URL WAKATIME_API_KEY TURSO_AUTH_TOKEN TURSO_DATABASE_URL ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET)
+    required_vars=(DOMAIN IMAGE IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER WAKATIME_API_URL WAKATIME_API_KEY TURSO_AUTH_TOKEN TURSO_DATABASE_URL ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET)
     k8s_dir="ekel-backend"
     apply_order=(secret services deployment ingress)
     has_clusterissuer=1
