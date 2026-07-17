@@ -6,6 +6,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY cmd ./cmd
+COPY docs ./docs
 COPY internal ./internal
 
 RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o /app/main ./cmd/app/development
