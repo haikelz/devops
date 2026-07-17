@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ekel-backend
+  labels:
+    app: ekel-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ekel-backend
+  template:
+    metadata:
+      labels:
+        app: ekel-backend
+    spec:
+      containers:
+        - name: ekel-backend
+          image: ${IMAGE}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+              name: http
+          env:
+            - name: PORT
+              value: "9090"
+            - name: APP_ENV
+              value: "production"
+            - name: APP_DEBUG
+              value: "false"
+            - name: WAKATIME_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: WAKATIME_API_URL
+            - name: WAKATIME_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: WAKATIME_API_KEY
+            - name: TURSO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: TURSO_AUTH_TOKEN
+            - name: TURSO_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: TURSO_DATABASE_URL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: ADMIN_PASSWORD
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: ADMIN_EMAIL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: JWT_SECRET
+            - name: IHSG_API_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: IHSG_API_URL
+            - name: SECRET_KEY_ADMIN
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: SECRET_KEY_ADMIN
+            - name: SECRET_KEY_CUSTOMER
+              valueFrom:
+                secretKeyRef:
+                  name: ekel-backend-env
+                  key: SECRET_KEY_CUSTOMER
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 9090
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /ping
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 12

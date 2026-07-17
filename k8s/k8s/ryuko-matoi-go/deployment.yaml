@@ -14,7 +14,7 @@ spec:
       labels:
         app: ryuko-matoi
     spec:
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: 120
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
@@ -176,10 +176,7 @@ spec:
                   name: ryuko-matoi-env
                   key: WHATSAPP_DATABASE_DIALECT
             - name: WHATSAPP_DATABASE_DSN
-              valueFrom:
-                secretKeyRef:
-                  name: ryuko-matoi-env
-                  key: WHATSAPP_DATABASE_DSN
+              value: "file:/app/data/whatsmeow.db?_pragma=foreign_keys(1)"
             - name: WHATSAPP_EVENT_BUFFER_SIZE
               valueFrom:
                 secretKeyRef:

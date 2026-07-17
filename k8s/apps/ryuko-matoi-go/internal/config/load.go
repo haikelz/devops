@@ -26,7 +26,7 @@ func Load() (*Config, error) {
 			SessionPath:     getEnvOrDefault("WHATSAPP_SESSION_PATH", "./data/session"),
 			DeviceName:      getEnvOrDefault("WHATSAPP_DEVICE_NAME", "ryuko-matoi-bot"),
 			DatabaseDialect: getEnvOrDefault("WHATSAPP_DATABASE_DIALECT", "sqlite"),
-			DatabaseDsn:     getEnvOrDefault("WHATSAPP_DATABASE_DSN", "file:whatsmeow.db?_pragma=foreign_keys(1)"),
+			DatabaseDsn:     getEnvOrDefault("WHATSAPP_DATABASE_DSN", "file:./data/whatsmeow.db?_pragma=foreign_keys(1)"),
 			PairingPhone:    os.Getenv("WHATSAPP_PAIRING_PHONE"),
 			EventBufferSize: int32(eventBufferSize),
 		},

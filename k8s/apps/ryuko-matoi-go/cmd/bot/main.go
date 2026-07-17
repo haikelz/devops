@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -27,6 +29,7 @@ import (
 
 const appTimezone = "Asia/Jakarta"
 const jakartaOffsetSeconds = 7 * 60 * 60
+const defaultHealthAddr = ":80"
 
 func main() {
 	ctx := context.Background()
@@ -65,6 +68,14 @@ func main() {
 
 	log.SetFlags(0)
 	log.SetOutput(logger)
+
+	healthServer := newHealthServer(healthAddr())
+	go func() {
+		logger.Info().Str("addr", healthServer.Addr).Msg("health server listening")
+		if err := healthServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error().Err(err).Msg("health server stopped")
+		}
+	}()
 
 	whatsAppRuntime, err := waInfra.NewRuntime(ctx, waInfra.RuntimeDependencies{
 		Config: &waInfra.Config{
@@ -173,7 +184,43 @@ func main() {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	if err := healthServer.Shutdown(shutdownCtx); err != nil {
+		logger.Error().Err(err).Msg("stop health server")
+	}
+
 	if err := whatsAppService.Stop(shutdownCtx); err != nil {
 		logger.Error().Err(err).Msg("stop whatsapp service")
 	}
+}
+
+func healthAddr() string {
+	value := strings.TrimSpace(os.Getenv("HEALTH_ADDR"))
+	if value == "" {
+		return defaultHealthAddr
+	}
+
+	return value
+}
+
+func newHealthServer(addr string) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           healthHandler(),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+}
+
+func healthHandler() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write([]byte("ok\n"))
+	})
+
+	return mux
 }
