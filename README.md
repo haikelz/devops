@@ -16,7 +16,7 @@ Familiarises with: providers, resources, variables, outputs, state files, and th
 
 ### Container Orchestration (Kubernetes)
 
-A monorepo (`k8s/`) with commitlint-conventional commits, lefthook git hooks, and knip dead-code analysis. Four real applications deployed via Kubernetes manifests:
+A monorepo (`k8s/`) with commitlint-conventional commits, lefthook git hooks, and knip dead-code analysis. Real applications deployed via Kubernetes manifests:
 
 | App | Stack | Description |
 |---|---|---|
@@ -24,8 +24,9 @@ A monorepo (`k8s/`) with commitlint-conventional commits, lefthook git hooks, an
 | **mbakmegumi** | Astro 6 + React 19 + GSAP + Three.js | Interactive frontend served through nginx, with Docker multi-stage builds |
 | **ryuko-matoi-go** | Go + whatsmeow + SQLite + AI APIs | WhatsApp bot with finance tracking, scheduling, OCR, and multi-platform posting (Twitter, Instagram, TikTok, Facebook) |
 | **umami** | Node.js + PostgreSQL 16 | Privacy-focused web analytics with StatefulSet for persistent database storage |
+| **ekel-backend** | Go + Echo + Turso/libSQL | API for Wakatime stats, IHSG market data, guestbook, and reactions |
 
-All apps follow a consistent K8s pattern: **Deployment** with security-hardened containers (non-root, read-only rootfs, dropped capabilities), **ClusterIP Service**, **Ingress** with cert-manager TLS, **topology spread constraints**, and startup/readiness/liveness probes.
+Apps follow a consistent K8s pattern: **Deployment**, **ClusterIP Service**, optional **Ingress** with cert-manager TLS, and app-specific health checks where the workload exposes HTTP.
 
 Umami adds: init container for dependency ordering, StatefulSet with PVCs, NetworkPolicy for pod-level segmentation.
 
@@ -33,7 +34,7 @@ A shared `ClusterIssuer` provisions LetsEncrypt certificates via HTTP-01 challen
 
 ### Deploy Scripts
 
-Each app has a `deploy-k8s.sh` that:
+The shared `k8s/deploy-k8s.sh` script:
 
 1. Sources `.env` for secrets
 2. Validates required variables
@@ -63,6 +64,7 @@ terraform apply
 cd k8s/apps/<app-name>
 cp .env.example .env
 # edit .env with your values
+cd ../..
 ./deploy-k8s.sh
 ```
 
@@ -80,7 +82,8 @@ devops/
 │   │   ├── mazanoke/       # Static nginx site
 │   │   ├── mbakmegumi/     # Astro + React frontend
 │   │   ├── ryuko-matoi-go/ # Go WhatsApp bot
-│   │   └── umami/          # Umami analytics
+│   │   ├── umami/          # Umami analytics
+│   │   └── ekel-backend/   # Go Echo API
 │   ├── k8s/                # Kubernetes manifests
 │   │   ├── shared/         # Shared resources (ClusterIssuer)
 │   │   └── {app}/          # Per-app: deployment, service, ingress, secret

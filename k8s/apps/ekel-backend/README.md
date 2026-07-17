@@ -1,93 +1,76 @@
-# Go Fiber Vercel Starter
+# ekel-backend
 
-An opionated production-ready starter template (included Swagger Docs) for deploying Go Fiber applications on Vercel's serverless platform.
+Go HTTP API for Wakatime stats, IHSG market data, guestbook, and reactions.
 
-## Features
+## Runtime
 
-- **Go Fiber v2**: High-performance web framework
-- **Vercel Deployment**: Optimized for serverless deployment
-- **Swagger Documentation**: API documentation using Swagger
-- **Hot Reload**: Development with Air for automatic rebuilds
-- **Structured Logging**: Using Uber's Zap logger
-- **High Performance**: Using ByteDance's Sonic for JSON handling and Protocol Buffers for Data Representation
+- Go 1.25
+- Echo HTTP server
+- GORM
+- Turso/libSQL in production
+- Swagger docs generated under `docs/`
 
-## Prerequisites
+The app listens on `PORT`, defaulting to `9090`. Kubernetes probes use:
 
-- Go 1.23.1 or later
-- [Vercel CLI](https://vercel.com/cli) (for deployment)
-- [Air](https://github.com/cosmtrek/air) (for development)
-
-## Project Structure
-
-```
-.
-├── cmd/
-│   └── app/
-│       ├── development/  # Development environment entry
-│       └── production/   # Production environment entry
-├── pkg/                  # Package code
-├── tmp/                  # Temporary build files
-├── .air.toml            # Air configuration for hot reload
-├── go.mod               # Go modules file
-├── go.sum               # Go modules checksum
-└── vercel.json          # Vercel deployment configuration
+```text
+GET /ping
 ```
 
-## Getting Started
+## Required Environment
 
-1. Clone the repository:
+For Kubernetes, set these in `k8s/apps/ekel-backend/.env`:
 
-   ```bash
-   git clone <repository-url>
-   cd go-fiber-vercel-starter
-   ```
+```env
+DOMAIN=example.com
+IMAGE=registry.example.com/ekel-backend:latest
+WAKATIME_API_URL=https://wakatime.com/api/v1/users/current/stats
+WAKATIME_API_KEY=
+TURSO_DATABASE_URL=
+TURSO_AUTH_TOKEN=
+IHSG_API_URL=
+SECRET_KEY_ADMIN=
+SECRET_KEY_CUSTOMER=
+ADMIN_PASSWORD=
+ADMIN_EMAIL=
+JWT_SECRET=
+```
 
-2. Install dependencies:
+Generate JWT signing secrets with:
 
-   ```bash
-   go mod download
-   ```
+```bash
+openssl rand -base64 64
+openssl rand -base64 64
+openssl rand -base64 64
+```
 
-3. Run development server (with hot reload):
-   ```bash
-   air
-   ```
+Use different values for `SECRET_KEY_ADMIN`, `SECRET_KEY_CUSTOMER`, and `JWT_SECRET`.
 
-## Development
+## Docker
 
-The project uses Air for hot reload during development. The configuration in `.air.toml` watches for file changes and automatically rebuilds the application.
+Build from the devops repo root:
 
-## Production Deployment
+```bash
+docker build -t ekel-backend-check k8s/apps/ekel-backend
+```
 
-This project is configured for deployment on Vercel. The `vercel.json` configuration includes:
+The Dockerfile copies `docs/` because `cmd/app/development/main.go` imports `app/docs` for Swagger registration.
 
-- Entry point: `cmd/app/production/main.go`
-- Supported HTTP methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
-- Automatic routing configuration
+## Kubernetes Deploy
 
-To deploy:
+From the devops repo root:
 
-1. Install Vercel CLI:
+```bash
+./k8s/deploy-k8s.sh
+```
 
-   ```bash
-   npm i -g vercel
-   ```
+Select `ekel-backend` from the menu.
 
-2. Deploy to Vercel:
-   ```bash
-   vercel
-   ```
+The deploy script renders:
 
-## Dependencies
+1. `k8s/k8s/shared/clusterissuer.yaml`
+2. `k8s/k8s/ekel-backend/secret.yaml`
+3. `k8s/k8s/ekel-backend/services.yaml`
+4. `k8s/k8s/ekel-backend/deployment.yaml`
+5. `k8s/k8s/ekel-backend/ingress.yaml`
 
-Key packages used in this project:
-
-- `github.com/gofiber/fiber/v2`: Web framework
-- `github.com/gofiber/contrib/swagger`: API documentation
-- `github.com/gofiber/contrib/fiberzap/v2`: Structured logging
-- `github.com/bytedance/sonic`: Fast JSON serialization
-- `go.uber.org/zap`: Logging
-
-## License
-
-This project is open-source and available under the MIT License.
+Production must provide `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. If they are empty, the app falls back to local SQLite, which is not valid for the current `CGO_ENABLED=0` Docker build.
