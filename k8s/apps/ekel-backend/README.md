@@ -22,7 +22,7 @@ For Kubernetes, set these in `k8s/apps/ekel-backend/.env`:
 
 ```env
 DOMAIN=example.com
-IMAGE=registry.example.com/ekel-backend:latest
+IMAGE=
 WAKATIME_API_URL=https://wakatime.com/api/v1/users/current/stats
 WAKATIME_API_KEY=
 TURSO_DATABASE_URL=

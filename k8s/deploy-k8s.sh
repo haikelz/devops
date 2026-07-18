@@ -67,8 +67,14 @@ case "$app_name" in
     has_clusterissuer=1
     ;;
   ryuko-matoi-go)
-    required_vars=(IMAGE)
+    required_vars=(IMAGE FINANCE_API_TOKEN)
     k8s_dir="ryuko-matoi-go"
+    apply_order=(pvc secret services deployment)
+    has_clusterissuer=0
+    ;;
+  ai-assistant)
+    required_vars=(IMAGE SUMOPOD_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
+    k8s_dir="ai-assistant"
     apply_order=(pvc secret services deployment)
     has_clusterissuer=0
     ;;

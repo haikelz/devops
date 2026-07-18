@@ -117,6 +117,11 @@ spec:
                 secretKeyRef:
                   name: ryuko-matoi-env
                   key: AI_MODEL
+            - name: FINANCE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: FINANCE_API_TOKEN
             - name: APP_NAME
               valueFrom:
                 secretKeyRef:
