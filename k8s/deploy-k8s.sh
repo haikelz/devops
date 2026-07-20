@@ -78,6 +78,12 @@ case "$app_name" in
     apply_order=(pvc secret services deployment)
     has_clusterissuer=0
     ;;
+  argocd)
+    required_vars=(DOMAIN EMAIL)
+    k8s_dir="argocd"
+    apply_order=(ingress)
+    has_clusterissuer=1
+    ;;
   umami)
     required_vars=(POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB APP_SECRET DOMAIN EMAIL TRACKER_SCRIPT_NAME)
     k8s_dir="umami"
@@ -121,6 +127,18 @@ if [[ "$has_clusterissuer" == 1 ]]; then
   render_apply clusterissuer.yaml
 fi
 
+if [[ "$app_name" == "argocd" ]]; then
+  argocd_version="${ARGOCD_VERSION:-v3.4.2}"
+
+  kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+  kubectl apply -n argocd --server-side --force-conflicts \
+    -f "https://raw.githubusercontent.com/argoproj/argo-cd/${argocd_version}/manifests/install.yaml"
+  kubectl -n argocd patch configmap argocd-cmd-params-cm \
+    --type merge \
+    -p '{"data":{"server.insecure":"true"}}'
+  kubectl -n argocd rollout restart deployment/argocd-server
+fi
+
 cd "$k8s_path/$k8s_dir"
 
 for resource in "${apply_order[@]}"; do
@@ -133,6 +151,10 @@ for resource in "${apply_order[@]}"; do
     fi
   fi
 done
+
+if [[ "$app_name" == "argocd" ]]; then
+  kubectl -n argocd wait --for=condition=Ready pod --all --timeout=5m
+fi
 
 echo ""
 echo "  Done: $app_name deployed."
