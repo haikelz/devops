@@ -69,7 +69,7 @@ case "$app_name" in
   ryuko-matoi-go)
     required_vars=(IMAGE FINANCE_API_TOKEN)
     k8s_dir="ryuko-matoi-go"
-    apply_order=(pvc secret services deployment)
+    apply_order=(argocd-application pvc secret services deployment)
     has_clusterissuer=0
     ;;
   ai-assistant)
