@@ -35,7 +35,7 @@ spec:
           emptyDir: {}
       containers:
         - name: ryuko-matoi
-          image: ${IMAGE}
+          image: haikelilham/ryuko-matoi-go:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 80
