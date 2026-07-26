@@ -67,7 +67,7 @@ case "$app_name" in
     has_clusterissuer=1
     ;;
   ryuko-matoi-go)
-    required_vars=(IMAGE FINANCE_API_TOKEN)
+    required_vars=(IMAGE)
     k8s_dir="ryuko-matoi-go"
     apply_order=(argocd-application pvc secret services deployment)
     has_clusterissuer=0
