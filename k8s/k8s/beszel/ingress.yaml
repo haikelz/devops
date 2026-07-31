@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress 
+metadata:
+  name: beszel
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassname: traefik
+  tls:
+    - hosts:
+        - ${DOMAIN}
+      secretName: beszel-tls 
+  rules:
+    - host: ${DOMAIN}
+      http:
+        paths:
+          - path: / 
+            pathType: prefix
+            backend:
+              service:
+                name: beszel
+                port:
+                  number: 8090

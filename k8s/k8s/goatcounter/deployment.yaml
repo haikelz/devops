@@ -87,7 +87,14 @@ spec:
             readOnlyRootFilesystem: true
             capabilities:
               drop:
-                - ALL
+                - ALL 
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m 
+              memory: 128Mi
       volumes:
         - name: goatcounter-data
           persistentVolumeClaim:

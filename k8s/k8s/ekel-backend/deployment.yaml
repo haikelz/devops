@@ -14,8 +14,22 @@ spec:
       labels:
         app: ekel-backend
     spec:
+      securityContext:
+        runAsNonRoot: true 
+        runAsUser: 65334
+        runAsGroup: 65334
+        fsGroup: 65334 
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: ekel-backend
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilites:
+              drop:
+                - ALL
           image: ${IMAGE}
           imagePullPolicy: Always
           ports:

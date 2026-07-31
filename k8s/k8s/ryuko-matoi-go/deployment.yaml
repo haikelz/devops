@@ -24,9 +24,8 @@ spec:
               app: ryuko-matoi
       volumes:
         - name: app-data
-          hostPath:
-            path: /data/ryuko-matoi
-            type: DirectoryOrCreate
+          persistentVolumeClaim:
+            claimName: ryuko-matoi-data
         - name: app-tmp
           emptyDir: {}
         - name: tmp

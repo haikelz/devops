@@ -84,6 +84,12 @@ case "$app_name" in
     apply_order=(secret services deployment ingress)
     has_clusterissuer=1
     ;;
+  beszel)
+    required_vars=(DOMAIN EMAIL IMAGE)
+    k8s_dir="beszel"
+    apply_order=(secret services deployment ingress)
+    has_clusterissuer=1
+    ;;
   *)
     echo "Unknown app: $app_name" >&2
     exit 1
