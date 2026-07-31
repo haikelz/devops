@@ -160,7 +160,10 @@ spec:
             - name: WHATSAPP_DATABASE_DSN
               value: "file:/app/data/whatsmeow.db?_pragma=foreign_keys(1)"
             - name: WHATSAPP_EVENT_BUFFER_SIZE
-              value: "64"
+              valueFrom:
+                secretKeyRef:
+                  name: ryuko-matoi-env
+                  key: WHATSAPP_EVENT_BUFFER_SIZE
             - name: OCR_PROVIDER
               valueFrom:
                 secretKeyRef:

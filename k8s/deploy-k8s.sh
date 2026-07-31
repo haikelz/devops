@@ -45,7 +45,7 @@ case "$app_name" in
   goatcounter)
     required_vars=(DOMAIN EMAIL IMAGE PASSWORD)
     k8s_dir="goatcounter"
-    apply_order=(pvc secret services deployment ingress)
+    apply_order=(pvc secret services networkpolicy pdb deployment ingress)
     has_clusterissuer=1
     ;;
   mazanoke)
@@ -60,38 +60,26 @@ case "$app_name" in
     apply_order=(secret services deployment ingress)
     has_clusterissuer=1
     ;;
-  omniroute)
-    required_vars=(DOMAIN IMAGE OMNIROUTE_WS_BRIDGE_SECRET)
-    k8s_dir="omniroute"
-    apply_order=(pvc secret services deployment ingress)
-    has_clusterissuer=1
-    ;;
   ryuko-matoi-go)
-    required_vars=(IMAGE)
+    required_vars=(IMAGE REMOVE_BG_API_KEY AI_API_KEY AI_PROVIDER AI_MODEL WHATSAPP_SESSION_PATH WHATSAPP_DATABASE_DIALECT WHATSAPP_EVENT_BUFFER_SIZE)
     k8s_dir="ryuko-matoi-go"
-    apply_order=(argocd-application pvc secret services deployment)
+    apply_order=(argocd-application pvc secret configmap services networkpolicy pdb deployment)
     has_clusterissuer=0
     ;;
   ai-assistant)
     required_vars=(IMAGE SUMOPOD_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
     k8s_dir="ai-assistant"
-    apply_order=(pvc secret services deployment)
+    apply_order=(pvc secret services networkpolicy deployment)
     has_clusterissuer=0
     ;;
   argocd)
     required_vars=(DOMAIN EMAIL)
     k8s_dir="argocd"
-    apply_order=(ingress)
-    has_clusterissuer=1
-    ;;
-  umami)
-    required_vars=(POSTGRES_USER POSTGRES_PASSWORD POSTGRES_DB APP_SECRET DOMAIN EMAIL TRACKER_SCRIPT_NAME)
-    k8s_dir="umami"
-    apply_order=(secret services postgres networkpolicy deployment ingress)
+    apply_order=(secret ingress)
     has_clusterissuer=1
     ;;
   ekel-backend)
-    required_vars=(DOMAIN IMAGE IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER WAKATIME_API_URL WAKATIME_API_KEY TURSO_AUTH_TOKEN TURSO_DATABASE_URL ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET)
+    required_vars=(DOMAIN IMAGE WAKATIME_API_URL WAKATIME_API_KEY TURSO_AUTH_TOKEN TURSO_DATABASE_URL ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER)
     k8s_dir="ekel-backend"
     apply_order=(secret services deployment ingress)
     has_clusterissuer=1
@@ -123,8 +111,12 @@ render_apply() {
 k8s_path="$SCRIPT_DIR/k8s"
 
 if [[ "$has_clusterissuer" == 1 ]]; then
-  cd "$k8s_path/shared"
-  render_apply clusterissuer.yaml
+  if kubectl api-resources --api-group=cert-manager.io 2>/dev/null | grep -q issuers; then
+    cd "$k8s_path/shared"
+    render_apply clusterissuer.yaml
+  else
+    echo "  cert-manager CRDs not found - skipping ClusterIssuer. Install cert-manager first." >&2
+  fi
 fi
 
 if [[ "$app_name" == "argocd" ]]; then
@@ -133,10 +125,17 @@ if [[ "$app_name" == "argocd" ]]; then
   kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
   kubectl apply -n argocd --server-side --force-conflicts \
     -f "https://raw.githubusercontent.com/argoproj/argo-cd/${argocd_version}/manifests/install.yaml"
+
+  echo "  Waiting for ArgoCD pods to be ready..."
+  kubectl -n argocd wait --for=condition=Ready pod --all --timeout=3m 2>/dev/null || true
+
   kubectl -n argocd patch configmap argocd-cmd-params-cm \
     --type merge \
     -p '{"data":{"server.insecure":"true"}}'
   kubectl -n argocd rollout restart deployment/argocd-server
+
+  echo "  Waiting for ArgoCD server after restart..."
+  kubectl -n argocd wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server --timeout=2m
 fi
 
 cd "$k8s_path/$k8s_dir"
@@ -144,17 +143,13 @@ cd "$k8s_path/$k8s_dir"
 for resource in "${apply_order[@]}"; do
   file="${resource}.yaml"
   if [[ -f "$file" ]]; then
-    if [[ "$resource" == "pvc" || "$resource" == "services" || "$resource" == "postgres" || "$resource" == "networkpolicy" ]]; then
+    if [[ "$resource" == "pvc" || "$resource" == "services" || "$resource" == "postgres" || "$resource" == "networkpolicy" || "$resource" == "pdb" || "$resource" == "configmap" ]]; then
       kubectl apply -f "$file"
     else
       render_apply "$file"
     fi
   fi
 done
-
-if [[ "$app_name" == "argocd" ]]; then
-  kubectl -n argocd wait --for=condition=Ready pod --all --timeout=5m
-fi
 
 echo ""
 echo "  Done: $app_name deployed."
