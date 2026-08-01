@@ -3,6 +3,7 @@ kind: Application
 metadata:
   name: ai-assistant
   namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
 spec:
   project: default
   source:
@@ -11,10 +12,13 @@ spec:
     path: k8s
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: bots
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 3
+      backoff: {duratio: 5s, factor: 2, maxDuration: 1m}
     syncOptions:
       - CreateNamespace=true
