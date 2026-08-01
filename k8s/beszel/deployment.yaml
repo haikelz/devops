@@ -23,79 +23,82 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
-        topologySpreadConstraints:
-          - maxSkew: 1
-            topologyKey: kubernetes.io/hostname
-            whenUnsatisfiable: ScheduleAnyway
-            labelSelector:
-              matchLabels:
-                app: beszel
-        volumes:
-          - name: beszel-data
-            persistentVolumeClaim:
-              claimName: beszel-data
-          - name: beszel-socket
-            image: ${IMAGE}
-            imagePullPolicy: Always
-            ports:
-              - containerPort:8090
-                name: http
-            volumeMounts:
-              - name: beszel-data
-                mountPath: /beszel_data 
-              - name: beszel-socket
-                mountPath: /beszel_socket
-            env: 
-              - name: APP_URL
-                value: https://${DOMAIN}
-            resources:
-              requests:
-                cpu: "100m"
-                memory: "129Mi"
-              limits:
-                cpu: "500m"
-                memory: "512Mi"
-            livenessProbe:
-              httpGet:
-                path: / 
-                port: 8090 
-              initialDelaySeconds: 10
-              periodSeconds: 30
-            readinessProbe:
-              httpGet:
-                path: / 
-                port: 8090
-              periodSecnds: 5 
-              failureThreshold: 24
-            securityContext:
-              allowPrivilegeEscalation: false
-              readOnlyRootFilesystem: false
-              capabilities:
-                drop:
-                  - ALL 
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: beszel
+      volumes:
+        - name: beszel-data
+          persistentVolumeClaim:
+            claimName: beszel-data
+        - name: beszel-socket
+          emptyDir: {}
+      containers:
+        - name: beszel-hub
+          image: ${IMAGE}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8090
+              name: http
+          volumeMounts:
+            - name: beszel-data
+              mountPath: /beszel_data
+            - name: beszel-socket
+              mountPath: /beszel_socket
+          env:
+            - name: APP_URL
+              value: https://${DOMAIN}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "129Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8090
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8090
+            periodSecnds: 5
+            failureThreshold: 24
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
 ---
 # PVC SQLITE
-apiVersion: apps/v1
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: beszel-data
   labels:
-    app: beszel 
+    app: beszel
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi 
+      storage: 10Gi
 ---
 # AGENT
 apiVersion: apps/v1
-kind: DaemonSet 
+kind: DaemonSet
 metadata:
   name: beszel-agent
   labels:
     app: beszel-agent
-spec: 
+spec:
   selector:
     matchLabels:
       app: beszel-agent
@@ -115,14 +118,14 @@ spec:
         - name: docker-sock
           hostPath:
             path: /var/run/docker.sock
-            type: Socket 
+            type: Socket
         - name: agent-data
           hostPath:
             path: /var/lib/beszel-agent
             type: DirectoryOrCreate
         - name: rootfs
           hostPath:
-            path: / 
+            path: /
             type: Directory
       containers:
         - name: beszel-agent
@@ -130,33 +133,59 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: 45876
-              name: agent 
+              name: agent
               hostPort: 45876
           volumeMounts:
             - name: docker-sock
               mountPath: /var/run/docker.sock
               readOnly: true
-        - name: agent-data
-          mountPath: /var/kib/beszel-agent
-        - name: rootfs 
-          mountPath: /host 
-          readOnly: true
-      env:
-        - name: LISTEN
-          value: "45876"
-        - name: HUB_URL
-          value: http://beszel: 8090
-        - name: KEY 
-          valueFrom:
-            secretKeyRef:
-              name: beszel-env 
-              key: KEY 
-        - name: TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: beszel-env 
-              key: TOKEN
-      resources:
-        requests:
-          cpu: "50m"
-          memory: "64Mi"
+            - name: agent-data
+              mountPath: /var/lib/beszel-agent
+            - name: rootfs
+              mountPath: /host
+              readOnly: true
+          env:
+            - name: LISTEN
+              value: "45876"
+            - name: HUB_URL
+              value: http://beszel:8090
+            - name: KEY
+              valueFrom:
+                secretKeyRef:
+                  name: beszel-env
+                  key: KEY
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: beszel-env
+                  key: TOKEN
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          startupProbe:
+            tcpSocket:
+              port: 45876
+            periodSeconds: 5
+            failureThreshold: 12
+          livenessProbe:
+            tcpSocket:
+              port: 45876
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 45876
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - SYS_PTRACE
