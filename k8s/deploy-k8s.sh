@@ -114,7 +114,7 @@ render_apply() {
 }
 
 # Apply
-k8s_path="$SCRIPT_DIR/k8s"
+k8s_path="$SCRIPT_DIR"
 
 if [[ "$has_clusterissuer" == 1 ]]; then
   if kubectl api-resources --api-group=cert-manager.io 2>/dev/null | grep -q issuers; then
