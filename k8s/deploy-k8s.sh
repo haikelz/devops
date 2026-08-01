@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-APPS_DIR="$SCRIPT_DIR/apps"
+APPS_DIR="$SCRIPT_DIR"
 
 echo ""
 echo "  Select app to deploy:"
