@@ -1,0 +1,162 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beszel-hub
+  labels:
+    app: beszel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beszel
+  template:
+    metadata:
+      labels:
+        app: beszel
+    spec:
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: kubernetes.io/hostname
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app: beszel
+        volumes:
+          - name: beszel-data
+            persistentVolumeClaim:
+              claimName: beszel-data
+          - name: beszel-socket
+            image: ${IMAGE}
+            imagePullPolicy: Always
+            ports:
+              - containerPort:8090
+                name: http
+            volumeMounts:
+              - name: beszel-data
+                mountPath: /beszel_data 
+              - name: beszel-socket
+                mountPath: /beszel_socket
+            env: 
+              - name: APP_URL
+                value: https://${DOMAIN}
+            resources:
+              requests:
+                cpu: "100m"
+                memory: "129Mi"
+              limits:
+                cpu: "500m"
+                memory: "512Mi"
+            livenessProbe:
+              httpGet:
+                path: / 
+                port: 8090 
+              initialDelaySeconds: 10
+              periodSeconds: 30
+            readinessProbe:
+              httpGet:
+                path: / 
+                port: 8090
+              periodSecnds: 5 
+              failureThreshold: 24
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              capabilities:
+                drop:
+                  - ALL 
+---
+# PVC SQLITE
+apiVersion: apps/v1
+kind: PersistentVolumeClaim
+metadata:
+  name: beszel-data
+  labels:
+    app: beszel 
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi 
+---
+# AGENT
+apiVersion: apps/v1
+kind: DaemonSet 
+metadata:
+  name: beszel-agent
+  labels:
+    app: beszel-agent
+spec: 
+  selector:
+    matchLabels:
+      app: beszel-agent
+  template:
+    metadata:
+      labels:
+        app: beszel-agent
+    spec:
+      hostNetwork: true
+      hostPID: false
+      dnsPolicy: ClusterFirstWithHostNet
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket 
+        - name: agent-data
+          hostPath:
+            path: /var/lib/beszel-agent
+            type: DirectoryOrCreate
+        - name: rootfs
+          hostPath:
+            path: / 
+            type: Directory
+      containers:
+        - name: beszel-agent
+          image: henrygd/beszel-agent:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 45876
+              name: agent 
+              hostPort: 45876
+          volumeMounts:
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+              readOnly: true
+        - name: agent-data
+          mountPath: /var/kib/beszel-agent
+        - name: rootfs 
+          mountPath: /host 
+          readOnly: true
+      env:
+        - name: LISTEN
+          value: "45876"
+        - name: HUB_URL
+          value: http://beszel: 8090
+        - name: KEY 
+          valueFrom:
+            secretKeyRef:
+              name: beszel-env 
+              key: KEY 
+        - name: TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: beszel-env 
+              key: TOKEN
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
