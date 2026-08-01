@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/haikelz/devops.git
     targetRevision: master
-    path: k8s/k8s/beszel
+    path: k8s/beszel
   destination:
     server: https://kubernetes.default.svc
     namespace: default
