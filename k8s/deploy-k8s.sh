@@ -87,7 +87,7 @@ case "$app_name" in
   beszel)
     required_vars=(DOMAIN EMAIL IMAGE)
     k8s_dir="beszel"
-    apply_order=(secret services deployment ingress)
+    apply_order=(secret services pvc deployment daemonset ingress)
     has_clusterissuer=1
     ;;
   *)

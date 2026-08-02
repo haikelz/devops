@@ -9,12 +9,3 @@ spec:
     contentTypeNosniff: true
     referrerPolicy: "strict-origin-when-cross-origin"
     permissionsPolicy: "camera=(), microphone=(), geolocation=()"
----
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: rate-limit
-spec:
-  rateLimit:
-    average: 50
-    burst: 30

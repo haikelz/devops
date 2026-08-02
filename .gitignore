@@ -44,4 +44,5 @@ coverage/
 logs/
 *.log
 
+prompts/
 # <<< create-ai-ignore managed
