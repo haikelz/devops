@@ -16,19 +16,26 @@ Familiarises with: providers, resources, variables, outputs, state files, and th
 
 ### Container Orchestration (Kubernetes)
 
-A monorepo (`k8s/`) with commitlint-conventional commits, lefthook git hooks, and knip dead-code analysis. Real applications deployed via Kubernetes manifests:
+A monorepo (`k8s/`) deploying real applications via Kubernetes manifests:
 
 | App | Stack | Description |
 |---|---|---|
 | **mazanoke** | nginx static site | Simple web deployment with ingress + TLS via cert-manager/LetsEncrypt |
 | **mbakmegumi** | Astro 6 + React 19 + GSAP + Three.js | Interactive frontend served through nginx, with Docker multi-stage builds |
-| **ryuko-matoi-go** | Go + whatsmeow + SQLite + AI APIs | WhatsApp bot with finance tracking, scheduling, OCR, and multi-platform posting (Twitter, Instagram, TikTok, Facebook) |
-| **umami** | Node.js + PostgreSQL 16 | Privacy-focused web analytics with StatefulSet for persistent database storage |
+| **ryuko-matoi-go** | Go + whatsmeow + SQLite + AI APIs | WhatsApp bot with finance tracking, scheduling, OCR, and multi-platform posting |
+| **goatcounter** | Go | Privacy-focused web analytics with PVC for persistent SQLite storage |
+| **ai-assistant** | Python + Telegram API | Telegram bot with AI integration via SumoPod API, PVC for persistent data |
 | **ekel-backend** | Go + Echo + Turso/libSQL | API for Wakatime stats, IHSG market data, guestbook, and reactions |
+| **argocd** | ArgoCD | GitOps operator managing declarative deployments from this repo |
+| **beszel** | Go + Svelte | Lightweight server monitoring with agent (DaemonSet) + hub (Deployment) |
 
 Apps follow a consistent K8s pattern: **Deployment**, **ClusterIP Service**, optional **Ingress** with cert-manager TLS, and app-specific health checks where the workload exposes HTTP.
 
-Umami adds: init container for dependency ordering, StatefulSet with PVCs, NetworkPolicy for pod-level segmentation.
+Goatcounter adds: PVC for SQLite persistence, NetworkPolicy for pod-to-pod segmentation.
+
+Beszel adds: DaemonSet for node-level metrics collection alongside a Deployment for the hub.
+
+ArgoCD manages the cluster itself via an ArgoCD Application CRD pointing at this repo.
 
 A shared `ClusterIssuer` provisions LetsEncrypt certificates via HTTP-01 challenge (Traefik ingress controller).
 
@@ -61,10 +68,10 @@ terraform plan
 terraform apply
 
 # 2. Deploy an application
-cd k8s/apps/<app-name>
+cd k8s/<app-name>
 cp .env.example .env
 # edit .env with your values
-cd ../..
+cd ..
 ./deploy-k8s.sh
 ```
 
@@ -78,19 +85,16 @@ devops/
 │   ├── variables.tf        # Input variables
 │   └── output.tf           # Stack outputs
 ├── k8s/                    # Kubernetes orchestration monorepo
-│   ├── apps/               # Application source + Dockerfiles
-│   │   ├── mazanoke/       # Static nginx site
-│   │   ├── mbakmegumi/     # Astro + React frontend
-│   │   ├── ryuko-matoi-go/ # Go WhatsApp bot
-│   │   ├── umami/          # Umami analytics
-│   │   └── ekel-backend/   # Go Echo API
-│   ├── k8s/                # Kubernetes manifests
-│   │   ├── shared/         # Shared resources (ClusterIssuer)
-│   │   └── {app}/          # Per-app: deployment, service, ingress, secret
-│   ├── package.json
-│   ├── commitlint.config.js
-│   ├── lefthook.yml
-│   └── knip.json
+│   ├── mazanoke/           # Static nginx site (K8s manifests)
+│   ├── mbakmegumi/         # Astro + React frontend (K8s manifests)
+│   ├── ryuko-matoi-go/     # Go WhatsApp bot (K8s manifests)
+│   ├── goatcounter/        # Go analytics (K8s manifests)
+│   ├── ai-assistant/       # Python Telegram bot (K8s manifests)
+│   ├── ekel-backend/       # Go Echo API (K8s manifests)
+│   ├── argocd/             # ArgoCD operator config
+│   ├── beszel/             # Beszel monitoring (K8s manifests)
+│   ├── shared/             # Shared resources (ClusterIssuer, middleware)
+│   └── deploy-k8s.sh       # One-script deploy for any app
 ├── .gitignore
 ├── .opencodeignore
 └── README.md
@@ -99,12 +103,11 @@ devops/
 ## Topics covered
 
 - **Terraform**: providers, resources, variables, state, GCP
-- **Kubernetes**: Deployments, Services, Ingresses, StatefulSets, ConfigMaps/Secrets, NetworkPolicies, probes, security contexts, topology spread, cert-manager
+- **Kubernetes**: Deployments, Services, Ingresses, DaemonSets, PVCs, ConfigMaps/Secrets, NetworkPolicies, probes, security contexts, cert-manager
 - **Docker**: multi-stage builds, Compose for local dev, image tagging
-- **Git hooks**: commitlint for conventional commits, lefthook for pre-push checks
-- **CI/CD**: `.gitlab-ci.yml` for the Go bot
+- **GitOps**: ArgoCD Application CRDs, declarative deployments from Git
 - **Security**: non-root containers, read-only filesystems, dropped capabilities, seccomp profiles, network segmentation
-- **Monitoring**: startup/readiness/liveness probes
+- **Monitoring**: startup/readiness/liveness probes, Beszel for node metrics
 
 ## Full DevOps Learning Guide
 
@@ -124,10 +127,10 @@ If you're following along:
 1. Start with **Terraform** — provision a GKE cluster and a storage bucket
 2. Get comfortable writing **Kubernetes manifests** — deployments and services
 3. Add **ingress** with cert-manager for TLS termination
-4. Progress to **StatefulSets** for stateful workloads (PostgreSQL)
-5. Harden with **security contexts**, **NetworkPolicies**, and **topology spread constraints**
-6. Wire up **git hooks** and **commit linting** for team consistency
-7. Deploy real applications — from static sites to AI-integrated Go bots
+4. Progress to **PVCs** for stateful workloads (goatcounter's SQLite)
+5. Harden with **security contexts**, **NetworkPolicies**, and **pod security standards**
+6. Deploy node-level monitoring with **DaemonSets** (beszel agent)
+7. Set up **GitOps** with ArgoCD for declarative deployments
 
 ## License
 

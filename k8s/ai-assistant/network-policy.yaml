@@ -5,7 +5,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: goatcounter
+      app: ai-assistant
   policyTypes: [Egress]
   egress:
     - to:

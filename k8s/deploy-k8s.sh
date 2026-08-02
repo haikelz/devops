@@ -45,7 +45,7 @@ case "$app_name" in
   goatcounter)
     required_vars=(DOMAIN EMAIL IMAGE PASSWORD)
     k8s_dir="goatcounter"
-    apply_order=(pvc secret services networkpolicy pdb deployment ingress)
+    apply_order=(pvc secret services network-policy deployment)
     has_clusterissuer=1
     ;;
   mazanoke)
@@ -63,19 +63,19 @@ case "$app_name" in
   ryuko-matoi-go)
     required_vars=(IMAGE REMOVE_BG_API_KEY AI_API_KEY AI_PROVIDER AI_MODEL WHATSAPP_SESSION_PATH WHATSAPP_DATABASE_DIALECT WHATSAPP_EVENT_BUFFER_SIZE)
     k8s_dir="ryuko-matoi-go"
-    apply_order=(argocd-application pvc secret configmap services networkpolicy pdb deployment)
+    apply_order=(argocd-application pvc secret services network-policy deployment)
     has_clusterissuer=0
     ;;
   ai-assistant)
     required_vars=(IMAGE SUMOPOD_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
     k8s_dir="ai-assistant"
-    apply_order=(pvc secret services networkpolicy deployment)
+    apply_order=(argocd-application pvc secret services network-policy deployment)
     has_clusterissuer=0
     ;;
   argocd)
     required_vars=(DOMAIN EMAIL)
     k8s_dir="argocd"
-    apply_order=(secret ingress)
+    apply_order=(secret services ingress)
     has_clusterissuer=1
     ;;
   ekel-backend)
@@ -87,7 +87,7 @@ case "$app_name" in
   beszel)
     required_vars=(DOMAIN EMAIL IMAGE)
     k8s_dir="beszel"
-    apply_order=(secret services pvc deployment daemonset ingress)
+    apply_order=(argocd-application secret services pvc deployment daemonset ingress)
     has_clusterissuer=1
     ;;
   *)
@@ -149,7 +149,7 @@ cd "$k8s_path/$k8s_dir"
 for resource in "${apply_order[@]}"; do
   file="${resource}.yaml"
   if [[ -f "$file" ]]; then
-    if [[ "$resource" == "pvc" || "$resource" == "services" || "$resource" == "postgres" || "$resource" == "networkpolicy" || "$resource" == "pdb" || "$resource" == "configmap" ]]; then
+    if [[ "$resource" == "pvc" || "$resource" == "services" || "$resource" == "network-policy" || "$resource" == "argocd-application" || "$resource" == "daemonset" ]]; then
       kubectl apply -f "$file"
     else
       render_apply "$file"
