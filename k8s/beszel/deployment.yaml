@@ -1,3 +1,17 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: beszel-data
+  labels:
+    app: beszel
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -54,7 +68,7 @@ spec:
           resources:
             requests:
               cpu: "100m"
-              memory: "129Mi"
+              memory: "128Mi"
             limits:
               cpu: "500m"
               memory: "512Mi"
@@ -68,7 +82,13 @@ spec:
             httpGet:
               path: /
               port: 8090
-            periodSecnds: 5
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8090
+            periodSeconds: 5
             failureThreshold: 24
           securityContext:
             allowPrivilegeEscalation: false
@@ -77,21 +97,6 @@ spec:
               drop:
                 - ALL
 ---
-# PVC SQLITE
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: beszel-data
-  labels:
-    app: beszel
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
-# AGENT
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -123,10 +128,6 @@ spec:
           hostPath:
             path: /var/lib/beszel-agent
             type: DirectoryOrCreate
-        - name: rootfs
-          hostPath:
-            path: /
-            type: Directory
       containers:
         - name: beszel-agent
           image: henrygd/beszel-agent:latest
@@ -141,9 +142,6 @@ spec:
               readOnly: true
             - name: agent-data
               mountPath: /var/lib/beszel-agent
-            - name: rootfs
-              mountPath: /host
-              readOnly: true
           env:
             - name: LISTEN
               value: "45876"

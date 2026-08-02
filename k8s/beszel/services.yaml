@@ -1,9 +1,9 @@
 apiVersion: v1
-kind: Secret 
+kind: Service
 metadata:
   name: beszel
   labels:
-    app: beszel 
+    app: beszel
 spec:
   type: ClusterIP
   selector:
