@@ -1,12 +1,106 @@
-# Terraform AWS Guide -- From Zero to Production
+# Terraform AWS Guide -- From SWE to Infrastructure Engineer
 
-Complete, copy-paste-and-run examples for provisioning AWS with Terraform.
+Complete, copy-paste-and-run examples for provisioning AWS with Terraform. Written for a fullstack SWE (JS/TS/Go) — every section maps infrastructure concepts to programming analogies.
+
+---
+
+## SWE to IaC: Mental Model Shift
+
+Infrastructure as Code means your config files ARE the infrastructure. Just like you write functions that create data structures, you write resources that create servers, databases, and networks.
+
+### Declarative vs Imperative
+
+As a SWE, you are used to imperative programming: "do this, then that, then this." Terraform is **declarative**: you describe the desired end state, and Terraform figures out how to get there.
+
+```go
+// Imperative (what you are used to)
+server := aws.CreateEC2("t3.micro")
+server.AttachSecurityGroup("web-sg")
+server.AssignIP("10.0.1.5")
+
+// Declarative (Terraform)
+resource "aws_instance" "web" {
+  instance_type = "t3.micro"
+  security_groups = [aws_security_group.web.name]
+  private_ip = "10.0.1.5"
+}
+```
+
+**Why declarative wins at scale**: You do not need to track what already exists. Terraform compares your desired state (`.tf` files) against actual state (`.tfstate`), then computes the minimal set of API calls needed. This is the same pattern as React's virtual DOM diffing.
+
+### The State File
+
+The most foreign concept for SWEs. `.tfstate` is a JSON file that maps your HCL resources to real AWS resource IDs. **Compare it to**: an ORM migration state table. Just like your ORM tracks which migrations have been applied so it does not re-run them, Terraform's state file tracks which resources exist so it does not re-create them.
+
+**Critical rule**: Never edit `.tfstate` manually. Never lose it. Use remote state (S3 + DynamoDB locking) for any team environment.
+
+### Plan Before Apply
+
+`terraform plan` = a dry-run that shows you EXACTLY what will change. Like `git diff` before `git commit`, or `--dry-run` in kubectl. Terraform will NOT apply until you approve the plan. This is your safety net.
+
+```
+$ terraform plan
+  # aws_s3_bucket.site will be created
+  + resource "aws_s3_bucket" "site" {
+      + bucket = "my-unique-bucket-name"
+      ...
+    }
+
+Plan: 1 to add, 0 to change, 0 to destroy.
+```
+
+### The Workflow
+
+```
+terraform init    # Download provider plugins (like npm install)
+terraform plan    # Dry-run diff (like git diff --staged)
+terraform apply   # Execute changes (like git commit + git push)
+terraform destroy # Tear everything down (like rm -rf, but for cloud)
+```
 
 ---
 
 ## Setup
 
 Install Terraform, authenticate via AWS CLI profile, env vars, or OIDC role.
+
+---
+
+## Project 0: Your First Terraform (15 minutes)
+
+Before the S3+CloudFront complexity, write a single S3 bucket with zero dependencies.
+
+```hcl
+# main.tf
+terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~> 5.0" }
+  }
+}
+
+provider "aws" { region = "us-east-1" }
+
+resource "aws_s3_bucket" "first" {
+  bucket = "my-first-tf-bucket-${random_id.suffix.hex}"
+}
+
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+```
+
+**Walk through**:
+```bash
+terraform init      # Downloads AWS provider (~30MB). Creates .terraform/ directory.
+terraform plan      # Shows: 1 S3 bucket to add. No changes, no destroys.
+terraform apply     # Creates the bucket in AWS. Writes .tfstate file.
+cat terraform.tfstate  # Look inside — see the bucket ARN, ID, region.
+terraform destroy   # Deletes the bucket. .tfstate.backup remains.
+```
+
+**What `destroy` does**: Deleting the bucket. But it does NOT delete: the `.terraform/` provider cache, the `.tfstate.backup` file, or any resources you created manually in the AWS console. Only resources Terraform knows about get destroyed.
+
+**You know it works when**: You can `apply` → `destroy` → `apply` again, and the second apply creates a fresh bucket with a different name (because `random_id` generates a new suffix each time).
 
 ---
 
@@ -88,6 +182,19 @@ Simple static website behind CloudFront CDN. HCL below:
 
 **Deploy**: mkdir site; terraform init; terraform plan; terraform apply
 
+**SWE Analogy**: S3 = a filesystem in the cloud, like `fs.writeFile()` but globally distributed. CloudFront = a CDN reverse proxy, like nginx `proxy_pass` but with edge caching at 400+ locations. The bucket policy is like middleware — it checks "does this request come from CloudFront?" before serving the object.
+
+**Why this pattern?** S3 public access is BLOCKED. Only CloudFront can read from S3 (via OAC). CloudFront handles caching, HTTPS, and custom domains. This is the "zero-trust" model applied to static files.
+
+**Debugging**:
+- `Access Denied` on CloudFront URL → Bucket policy not updated. Check `aws_s3_bucket_policy.cf` was applied. Wait 5 minutes for CloudFront propagation.
+- `BucketAlreadyExists` → S3 bucket names are globally unique. Add a random suffix. All AWS accounts share the same namespace.
+- `NoSuchBucket` on destroy → Someone deleted the bucket manually. Run `terraform import aws_s3_bucket.site <bucket-name>` to bring it back under Terraform management, then destroy properly.
+
+**Cost Note**: S3 costs ~$0.023/GB stored, CloudFront ~$0.085/GB served. For learning: free tier covers 5GB S3 + 1TB CloudFront transfer for 12 months. You will likely pay $0.
+
+**Advanced Extension**: Add a Route53 alias record to point your domain at CloudFront. Add an ACM certificate for HTTPS (free, but must be in us-east-1 region for CloudFront).
+
 ---
 
 ## Project 2: VPC from Scratch
@@ -150,6 +257,19 @@ No default VPC. Build every component manually.
 **Module it**: Extract to modules/vpc with variables (name, cidr, azs) and outputs (vpc_id, subnet_ids).
 
 **Key**: cidrsubnet("10.0.0.0/16", 8, n) = /24 subnets. NAT Gateway costs ~$35/mo.
+
+**SWE Analogy**: A VPC is like a namespace/container for your network — everything inside shares the same address space. Public subnets = routes that go through an Internet Gateway (like `0.0.0.0/0` in a route table). Private subnets = routes through a NAT Gateway (one-way: outbound only). The route table is like a router's config — it decides where packets go based on destination CIDR.
+
+**Why this pattern?** Public subnets hold load balancers (internet-facing). Private subnets hold application servers and databases (no direct internet access). This is defense in depth — even if an attacker compromises your app server, they cannot receive inbound connections because there is no route from the internet to the private subnet.
+
+**Debugging**:
+- `InvalidSubnet.Conflict` for multiple AZs → Your `count` indexing is creating the same CIDR for all subnets. Use `cidrsubnet(cidr, 8, count.index)` to offset each subnet.
+- EC2 in private subnet cannot reach internet → NAT Gateway must be in a PUBLIC subnet. Check `aws_route_table.private` routes to the NAT GW.
+- `DependencyViolation` on destroy → Resources still reference the VPC (e.g., security groups). Destroy those first or add `depends_on`.
+
+**Cost Note**: VPC itself is free. NAT Gateway costs ~$35/month + $0.045/GB data processed. For learning: provision, study, destroy within an hour. Or skip the NAT Gateway for cost-sensitive practice (your EC2 in private subnets just cannot reach the internet).
+
+
 
 ---
 
@@ -363,6 +483,100 @@ Production-grade K8s with managed node groups.
 
 **Access**: aws eks update-kubeconfig --region us-east-1 --name my-cluster
 
+**SWE Analogy**: EKS = managed Kubernetes control plane. AWS runs the API server, scheduler, etcd for you. You only manage worker nodes. The node group is like a Kubernetes Node auto-scaler but at the AWS level — it provisions EC2 instances that join your cluster.
+
+**Why this pattern?** Managed K8s is the standard. Self-managed K8s (kops, kubeadm) requires you to patch, upgrade, and backup the control plane. EKS handles this. Nodes go in private subnets (no public IPs), API endpoint has both public (for kubectl) and private (for internal access) enabled.
+
+**Debugging**:
+- `Cannot connect to cluster` → Run `aws eks update-kubeconfig` first. Check that your IAM user has `eks:DescribeCluster` permission.
+- Nodes show `NotReady` → Check node group IAM role has `AmazonEKSWorkerNodePolicy` and `AmazonEKS_CNI_Policy`. Missing CNI policy = pods cannot get IPs.
+- `Insufficient capacity` on node group create → AWS may not have t3.medium in that AZ. Try a different instance type or AZ.
+
+**Cost Note**: EKS control plane costs $73/month (flat fee, NOT per-node). Node group: t3.medium ~$30/month per node. A 2-node cluster = ~$133/month minimum. For learning: use GKE (free control plane) or destroy EKS after practice.
+
+---
+## Project 9: Multi-Environment Terraform (Production Patterns)
+
+A single Terraform workspace is not enough for dev/staging/prod. You need environment isolation.
+
+### Approach 1: Directory-per-Environment (Recommended)
+
+```
+terraform/
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf      # Calls modules with dev-specific values
+│   │   └── terraform.tfvars
+│   ├── staging/
+│   │   ├── main.tf
+│   │   └── terraform.tfvars
+│   └── prod/
+│       ├── main.tf
+│       └── terraform.tfvars
+└── modules/
+    ├── vpc/
+    ├── eks/
+    └── rds/
+```
+
+Each environment has its own state file (different S3 backend key):
+```hcl
+# environments/prod/backend.tf
+terraform {
+  backend "s3" {
+    bucket = "myco-terraform-state"
+    key    = "prod/terraform.tfstate"  # Different key per env!
+    region = "us-east-1"
+  }
+}
+```
+
+### Approach 2: Terraform Workspaces
+
+```bash
+terraform workspace new dev
+terraform workspace new staging
+terraform workspace new prod
+terraform workspace select prod && terraform apply
+```
+
+Workspaces create separate state files under the same backend. Simpler for small teams, but ALL environments share the same backend config and credentials — one mistake can affect prod.
+
+### tfvars Pattern
+
+```hcl
+# terraform.tfvars (dev)
+environment = "dev"
+instance_count = 1
+instance_type = "t3.micro"
+
+# terraform.tfvars (prod)
+environment = "prod"
+instance_count = 3
+instance_type = "t3.medium"
+```
+
+### The Blast Radius Concept
+
+**NEVER share state between environments.** If your dev Terraform accidentally deletes a resource, and that resource's state is shared with prod, your prod goes down too.
+
+Rules:
+- Separate state files per environment (different S3 keys or different workspaces)
+- Separate AWS accounts for prod (or at minimum separate IAM roles)
+- `terraform destroy` only in dev/staging. Prod destroy should require manual approval in CI
+- Use `prevent_destroy = true` lifecycle rule on production data stores (RDS, S3, DynamoDB)
+
+### Module Versioning
+
+Pin module versions with Git tags:
+
+```hcl
+module "vpc" {
+  source = "github.com/myorg/terraform-modules//vpc?ref=v1.2.0"
+  # Never use ?ref=main in production
+}
+```
+
 ---
 
 ## Remote State: S3 Backend + DynamoDB Locking
@@ -392,33 +606,191 @@ Bootstrap once per account: S3 bucket with versioning, SSE-S3, public access blo
 
 **depends_on**: Only when Terraform can't infer the dependency (e.g., S3 policy depends on CloudFront).
 
+### SWE Anti-Patterns (What You Will Do Wrong)
+
+1. **Hardcoding ARNs/IDs** — You write `subnet-abc123` because copying from the console is fast. Next week, someone recreates the subnet with a new ID, and your config breaks. Use `data` sources or resource references (`aws_subnet.private[0].id`).
+
+2. **Manual console changes** — You add a security group rule in the AWS console to "quickly test something." Then `terraform plan` wants to remove it. Terraform is the source of truth. The console is read-only. If you need the rule, put it in the `.tf` file.
+
+3. **Not using data sources** — You look up the AMI ID in the console (`ami-0c55b159cbfafe1f0`), paste it into your Terraform config. This AMI is region-specific and will be deprecated. Use:
+
+```hcl
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+  filter { name = "name"; values = ["al2023-ami-*-x86_64"] }
+}
+```
+
+4. **Terraform + manual changes in the same account** — You provision a VPC with Terraform, then create an EC2 in the console. Terraform does not know about that EC2, and you cannot reproduce it. Either Terraform manages everything, or nothing. Pick one.
+
+### DRY in Terraform
+
+- **locals**: Define once, reference everywhere. Common tags, naming prefixes, environment name.
+- **Modules**: Reusable infrastructure components. Write once, instantiate per environment via `source` and `variables`.
+- **Terragrunt**: A thin wrapper around Terraform that keeps your configs DRY at the environment level. Useful when managing 10+ environments.
+
+### Multi-Region Tips
+
+```hcl
+provider "aws" { alias = "us-east-1"; region = "us-east-1" }
+provider "aws" { alias = "eu-west-1"; region = "eu-west-1" }
+
+resource "aws_s3_bucket" "primary"   { provider = aws.us-east-1; ... }
+resource "aws_s3_bucket" "replica"   { provider = aws.eu-west-1; ... }
+```
+
+Use `for_each` over regions:
+```hcl
+variable "regions" { type = set(string); default = ["us-east-1", "eu-west-1"] }
+resource "aws_s3_bucket" "multi" { for_each = var.regions; bucket = "my-app-${each.key}"; ... }
+```
+
+
 ---
 
-## Project 8: Terraform CI/CD
+## Project 8: Terraform CI/CD Deep-Dive
 
-GitLab CI pipeline:
+Automate plan/apply to prevent manual mistakes and enforce review.
 
-    stages: [validate, plan, apply]
-    validate: extends .terraform; script: fmt -check && validate
-    plan: extends .terraform; script: plan -out=plan; artifacts: [plan]
-    apply: extends .terraform; when: manual; script: apply plan
+### GitLab CI (Full Pipeline)
 
-GitHub Actions: hashicorp/setup-terraform action, OIDC for AWS auth (no secrets needed).
+```yaml
+# .gitlab-ci.yml
+stages:
+  - validate
+  - plan
+  - apply
 
-**State isolation**: Separate state per environment via backend key (prod/, staging/).
+.terraform_base: &terraform_base
+  image: hashicorp/terraform:1.9
+  before_script:
+    - cd ${CI_ENVIRONMENT_NAME}
+    - terraform init
+
+fmt_validate:
+  stage: validate
+  <<: *terraform_base
+  script:
+    - terraform fmt -check -recursive
+    - terraform validate
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+plan:
+  stage: plan
+  <<: *terraform_base
+  script:
+    - terraform plan -out=plan.tfplan
+  artifacts:
+    paths:
+      - ${CI_ENVIRONMENT_NAME}/plan.tfplan
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+apply:
+  stage: apply
+  <<: *terraform_base
+  script:
+    - terraform apply plan.tfplan
+  when: manual  # Requires a human to click "Run"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+```
+
+**Stage-by-stage**: `validate` catches syntax errors, `plan` generates the diff (saved as an artifact for review), `apply` requires manual approval and only runs on main branch merges.
+
+### GitHub Actions with OIDC
+
+OIDC (OpenID Connect) lets GitHub Actions assume an AWS IAM role WITHOUT storing AWS credentials as secrets. This is the modern standard.
+
+```yaml
+# .github/workflows/terraform.yml
+name: Terraform
+on:
+  pull_request:
+    paths: ['terraform/**']
+  push:
+    branches: [main]
+    paths: ['terraform/**']
+
+permissions:
+  id-token: write   # Required for OIDC
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: [dev, staging]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::ACCOUNT:role/github-actions-terraform
+          aws-region: us-east-1
+
+      - run: terraform init
+        working-directory: terraform/environments/${{ matrix.environment }}
+
+      - run: terraform plan -out=plan.tfplan
+        working-directory: terraform/environments/${{ matrix.environment }}
+
+      # On push to main, auto-apply plan
+      - if: github.event_name == 'push' && matrix.environment != 'prod'
+        run: terraform apply plan.tfplan
+        working-directory: terraform/environments/${{ matrix.environment }}
+```
+
+### Atlantis (PR-Based Plan/Apply)
+
+Atlantis runs `terraform plan` automatically on PR creation and posts the plan as a PR comment. Apply happens by commenting `atlantis apply` on the PR.
+
+```hcl
+# atlantis.yaml
+version: 3
+projects:
+  - name: dev
+    dir: terraform/environments/dev
+    workflow: default
+  - name: staging
+    dir: terraform/environments/staging
+    workflow: default
+  - name: prod
+    dir: terraform/environments/prod
+    workflow: default
+    apply_requirements: [approved, mergeable]  # Requires PR approval for prod
+```
+
+### How to Review a Terraform Plan in a PR
+
+When someone opens a PR with Terraform changes, look for:
+
+1. **Destroy/Create** — `+` means create, `-` means destroy, `~` means modify in-place. Any `-` on a database, DNS record, or load balancer = red flag. Ask: is this intentional?
+2. **Security group changes** — Adding `0.0.0.0/0` ingress = anyone can access. Is this on the right port? Should it be restricted to a specific CIDR?
+3. **IAM changes** — Any new `aws_iam_policy` or `aws_iam_role` — does it follow least privilege? Does `"Resource": "*"` need to be scoped?
+4. **Cost impact** — New NAT Gateway? New RDS instance? These have fixed costs ($35-100/month). Is this budgeted?
+5. **State drift** — If the plan shows changes you did not expect (resources Terraform wants to modify that the PR did not touch), someone made manual console changes. Ask them to `terraform import` or clean up.
+
+
 
 ---
 
 ## Learning Path
 
-1. **S3 + CloudFront** -- understand providers, resources, data sources, outputs
-2. **VPC from scratch** -- understand networking, modules, count
-3. **EC2 + ALB + ASG** -- understand compute, load balancing, scaling
-4. **RDS + Secrets Manager** -- understand stateful resources, security
-5. **IAM** -- understand least privilege, roles, policies
-6. **Lambda + API Gateway** -- understand serverless patterns
-7. **EKS** -- understand managed K8s on AWS
-8. **CI/CD** -- automate everything
+0. **Project 0** — understand init/plan/apply/destroy, state file, provider basics
+1. **S3 + CloudFront** — understand providers, resources, data sources, outputs
+2. **VPC from scratch** — understand networking, modules, count/for_each
+3. **EC2 + ALB + ASG** — understand compute, load balancing, scaling
+4. **RDS + Secrets Manager** — understand stateful resources, security
+5. **IAM** — understand least privilege, roles, policies
+6. **Lambda + API Gateway** — understand serverless patterns
+7. **EKS** — understand managed K8s on AWS
+8. **Multi-Environment** — understand workspaces, tfvars, blast radius, module versioning
+9. **CI/CD** — automate plan/apply, PR-based review, OIDC auth
 
 ---
 

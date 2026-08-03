@@ -1,6 +1,52 @@
-# DevOps Learning Guide — Zero to Job Ready
+# DevOps Learning Guide — SWE to DevOps Engineer
 
-A complete, structured curriculum to go from knowing nothing about DevOps to being employable as a Junior DevOps Engineer. This guide assumes you already understand **Docker** basics; everything else is built from the ground up.
+A complete, structured curriculum for a **fullstack software engineer** (JavaScript/TypeScript/Go, Docker, basic K8s) transitioning to DevOps Engineer. You already know how to build software — this guide teaches you how to build, deploy, and operate the platforms that run it.
+
+---
+
+## SWE to DevOps: Your Bridge Map
+
+DevOps is not a new career. It is applying your existing SWE skills to a different layer of the stack.
+
+### What You Already Know (That Translates Directly)
+
+| SWE Skill | DevOps Translation |
+|---|---|
+| **Programming** (JS/TS/Go) | IaC (Terraform, Ansible), automation scripts, CI/CD pipeline DSLs |
+| **Debugging** (breakpoints, logs, traces) | Infrastructure troubleshooting (kubectl describe, terraform plan, Prometheus metrics) |
+| **API design** (REST, gRPC, contracts) | Service interfaces (ClusterIP, Ingress), cloud API design, infra module contracts |
+| **Async thinking** (promises, goroutines) | Distributed systems reasoning, eventual consistency, message queues |
+| **Version control** (Git, PRs, branching) | GitOps (ArgoCD, Flux), configuration-as-code versioning, state management |
+| **Testing** (unit, integration, e2e) | Infrastructure testing (terratest, plan validation, chaos engineering) |
+| **Code review** (patterns, bugs) | Infrastructure review (blast radius analysis, security groups, cost impact) |
+
+### What is Genuinely New
+
+- **Networking fundamentals** — You have used `fetch()` and HTTP clients. Now you need subnets, CIDR blocks, route tables, load balancers, TLS termination at the infrastructure level, and how packets traverse VPCs.
+- **Infrastructure lifecycle** — Servers are not deployed once and forgotten. They need provisioning, scaling, patching, monitoring, and decommissioning. Entire lifecycles managed through code.
+- **State management** — Terraform state, Kubernetes etcd, configuration drift detection. Infrastructure state IS the source of truth — not the running environment.
+- **Failure modes** — Your app crashes with a stack trace. Infrastructure fails silently, degrades gradually, or takes down your cluster. Think blast radius and graceful degradation.
+- **On-call mindset** — You are keeping systems alive. Alert fatigue, incident response, post-mortems, error budgets — these are core job functions.
+- **Cloud economics** — Every resource costs money, every hour. From free localhost to ~$70/month for a dev cluster. Cost awareness becomes second nature.
+
+### What You Need to Unlearn
+
+| SWE Habit | DevOps Reality |
+|---|---|
+| "Works on my machine" | Your machine does not matter. It works in production or it does not work. |
+| SSH into the server to fix it | Servers are cattle, not pets. If one breaks, kill it and a new one spawns. Never SSH. |
+| Deploy by pushing code | Deploy by merging config. GitOps means repo state IS cluster state. |
+| Focus on app code | The app is 20%. Networking, storage, security, scaling, monitoring — the other 80%. |
+| Manual one-off fixes | Everything automated, idempotent, repeatable. Do it manually once, you will do it wrong the second time. |
+| "I'll set up the DB later" | Infrastructure comes first. No app deploys without somewhere to run. |
+
+### The Mindset Shift
+
+As a SWE, you built features users interact with. As a DevOps engineer, you build **platforms that run features reliably.**
+
+Your users are other developers. Your feature is their deployment pipeline. Your UX is `kubectl apply`, your API is a Terraform module, your error messages are 500 pages during an outage.
+
+Success means: developers ship faster, deployments do not fail, and nobody pages you at 3 AM.
 
 ---
 
@@ -77,6 +123,53 @@ You cannot manage infrastructure without understanding how data moves.
 
 ---
 
+## Phase 0.5: The DevOps Mindset (SWE Bridge)
+
+Before diving into tools, internalize the operating philosophy. This separates a "developer who runs Docker" from a DevOps engineer.
+
+### 12-Factor App Principles (Through DevOps Lens)
+
+You have likely read [12factor.net](https://12factor.net). Here is the DevOps perspective:
+
+1. **Codebase**: One app = one repo. Terraform repo: same rule. One repo per infrastructure module.
+2. **Dependencies**: Declare explicitly. Terraform provider versions pinned (NEVER `latest`), Docker base image tags pinned to SHA digests.
+3. **Config**: Store in environment, not code. Kubernetes Secrets, Terraform variables, GitHub Actions secrets — same principle, different layer.
+4. **Backing services**: Treat as attached resources. Database URL changes per environment — your app should not care. K8s Services have stable DNS names for this reason.
+5. **Build, release, run**: Strict separation. Build a Docker image once, tag it, deploy the same artifact to dev/staging/prod. Never rebuild between environments.
+6. **Processes**: Stateless, share-nothing. State goes in a database or object store. Pods are ephemeral; StatefulSets exist for stateful workloads.
+7. **Port binding**: Export services via port binding. App listens on `:3000`, Service maps to port 80, Ingress exposes externally. Each layer explicit.
+8. **Concurrency**: Scale out via the process model. Kubernetes replicas, AWS Auto Scaling Groups, Lambda concurrency — horizontal scaling.
+9. **Disposability**: Fast startup, graceful shutdown. SIGTERM → drain connections → exit 0. K8s gives your pod 30 seconds before SIGKILL. Respect it.
+10. **Dev/prod parity**: Keep environments similar. Docker helps; same cloud provider, database engine, resource sizes help more.
+11. **Logs**: Treat as event streams. App writes to stdout. Fluentd/Promtail picks it up. Loki/Elasticsearch indexes it. Grafana/Kibana displays it. Never SSH and `tail -f`.
+12. **Admin processes**: Run as one-off. `kubectl exec` for debugging only. `terraform taint` for state manipulation. Everything scripted.
+
+### Cattle, Not Pets
+
+**SWE analogy**: You have 100 API instances behind a load balancer. One starts returning 500s. Do you SSH in and debug? No — kill it. The load balancer routes to healthy instances. A new one spins up from the same Docker image.
+
+"Cattle, not pets" — infrastructure is disposable, replaceable, uniform. No emotional attachment to servers. No manual patching. Redeploy from a golden image.
+
+**Example from this repo**: Every app in `k8s/` uses a Deployment with `replicas` and `strategy: RollingUpdate`. If a pod crashes, K8s replaces it. If a node dies, pods reschedule. The Deployment spec is the truth — running pods are cattle.
+
+### Immutable Infrastructure
+
+SWEs deploy mutably: SSH in, `git pull`, `npm install`, restart. This works once — then configuration drift sets in.
+
+Immutable infrastructure: never modify a running server. Build a new image, deploy it, kill the old one. Every deploy is a clean slate from a known good state. Docker makes this natural — your Dockerfile IS the server configuration.
+
+### Idempotency
+
+As a SWE, you write idempotent APIs: `PUT /users/42` with the same payload always produces the same result. Apply this to infrastructure:
+
+- `kubectl apply -f deployment.yaml` → applied twice = same state
+- `terraform apply` → runs twice = no changes on second run
+- `ansible-playbook site.yml` → runs twice = all tasks report "ok"
+
+`terraform plan` shows the diff between desired state (`.tf` files) and actual state (`.tfstate` file). It is a dry-run for infrastructure — imagine `git push` showing a diff before applying.
+
+---
+
 ## Phase 1: Version Control & Collaboration
 
 Master the Git workflows used in real teams.
@@ -116,6 +209,24 @@ The dominant IaC tool. HashiCorp Terraform (or OpenTofu).
 
 **Do this**: Write Terraform that provisions a VPC, a subnet, an EC2 instance with a security group, and an S3 bucket. Use a module from the registry. Configure remote state.
 
+**SWE Connection** — Terraform's HCL is a declarative DSL. You describe WHAT you want, not HOW to create it. Like React (`<div className="card">`) vs imperative DOM (`document.createElement`). `terraform plan` is like TypeScript's type checker — it tells you what will happen BEFORE it happens. Go developers: `terraform plan` returns a diff. If wrong, you do not apply. Same pattern as `if err != nil { return err }` — check before proceeding.
+
+**SWE Note on Pulumi**: As a TypeScript/Go developer, Pulumi will feel natural — write infra in your language with real loops, functions, types. Terraform's HCL will feel primitive. Learn Terraform first anyway — 80%+ of the market uses it. Concepts transfer; syntax is the minor part.
+
+**Common SWE Pitfalls**:
+1. **Manual console changes** — Add a tag in the AWS console, then `terraform plan` shows a diff wanting to remove it. Terraform is source of truth; the console is read-only. Fix: `terraform import` the resource, or delete the manual change.
+2. **State file corruption** — `.tfstate` maps HCL to real cloud resources. Never edit manually. Never lose it. Use remote state with versioning (S3 + DynamoDB locking).
+3. **"I'll just terraform destroy and rebuild"** — Works in dev. In production, destroy deletes your database, DNS, load balancer. Blast radius = entire cloud account. In production, `terraform apply -target` for surgical changes.
+
+**Troubleshooting FAQ**:
+- `Error: Error acquiring the state lock` → Someone else is running apply. Wait, or `terraform force-unlock` (dangerous).
+- `Error: Provider produced inconsistent result after apply` → Cloud provider returned unexpected result. Run `terraform refresh` then re-apply.
+- `Error: Error creating S3 bucket: BucketAlreadyExists` → Bucket names are globally unique across ALL AWS accounts.
+
+**Cost Note**: The VPC + EC2 exercise costs ~$5-10/month if left running. ALWAYS `terraform destroy` after exercises. Set an AWS Budget Alert before provisioning anything.
+
+**Repo Reference**: This repo has working GCP Terraform at `terraform/`. Read `main.tf` for provider + bucket, `gke.tf` for GKE cluster, `variables.tf` for parameterization.
+
 ### 2.2 Infrastructure Testing
 
 - `terraform plan` in CI with review
@@ -150,6 +261,34 @@ K8s is the non-negotiable skill for DevOps roles.
 - Probes: startup, readiness, liveness
 
 **Do this**: Deploy a simple web app (nginx) using `kubectl run`, then recreate it with YAML manifests. Add a Service, then an Ingress. Scale it. Do a rolling update. Roll back.
+
+**SWE Connection** — Kubernetes is a distributed operating system. Map it to programming concepts:
+
+| K8s Concept | Programming Analogy |
+|---|---|
+| Pod | OS process — smallest schedulable unit |
+| Deployment | Process supervisor (systemd) keeping N replicas running |
+| Service | Stable interface/API endpoint for a set of pods |
+| Ingress | Reverse proxy (nginx) routing external traffic |
+| ConfigMap/Secret | Environment variables + config files, declarative |
+| Namespace | Module/package boundary isolating resources |
+| Probes | Health check endpoints your supervisor calls |
+
+**The K8s API is just an HTTP API** — `kubectl` is a CLI client. You could call `POST /api/v1/namespaces/default/pods` with `curl`. You are interacting with a REST API that manages distributed compute resources.
+
+**Common SWE Pitfalls**:
+1. **"I'll just kubectl exec into the pod and fix it"** — This is patching production directly. The fix disappears when the pod restarts. Fix the manifest, not the running pod.
+2. **"My app works locally, why doesn't it in K8s?"** — Resource limits. Your local machine has 16GB RAM. Your pod has 256Mi. Add `resources.limits.memory` or your app gets OOMKilled.
+3. **"I'll use NodePort for my service"** — NodePort exposes your app on a high port on every node. Fine for learning; production uses Ingress or LoadBalancer. NodePort + public node IPs = security incident.
+
+**Troubleshooting FAQ**:
+- **Pod stuck in `CrashLoopBackOff`** → `kubectl logs <pod> --previous`. 90% of the time: missing env var, wrong command, or app panics on startup.
+- **Pod stuck in `Pending`** → `kubectl describe pod <pod>`, check Events. Usually: insufficient CPU/memory, nodeSelector mismatch, or PVC not bound.
+- **Service not routing traffic** → `kubectl get endpoints <service>`. If empty, selector labels do not match pod labels. Service selectors use label matching — like a database query with WHERE.
+
+**Cost Note**: A 2-node GKE cluster runs ~$70/month. For learning: use minikube or kind (free, local) for basics, then a cheap managed cluster for Ingress/cert-manager practice. Destroy when not in use.
+
+**Repo Reference**: This repo's `k8s/` directory is a real K8s monorepo. Study: `k8s/mazanoke/` (simplest: deploy + service + ingress + cert-manager), `k8s/goatcounter/` (adds PVC + NetworkPolicy), `k8s/beszel/` (adds DaemonSet for node monitoring).
 
 ### 3.2 Storage
 
@@ -511,27 +650,77 @@ Before applying, confirm you can:
 
 ---
 
-## Quick Reference: Weekly Study Plan
+## Quick Reference: Weekly Study Plan (SWE-Adjusted)
+
+Your SWE background compresses the Linux/Git phases. Focus more time on K8s, cloud, and projects.
 
 | Week | Focus | Practical |
 |------|-------|-----------|
-| 1–2 | Linux fundamentals | Set up a server, navigate, process text |
-| 3 | Bash scripting | Write automation scripts |
-| 4 | Git deep-dive | Rebase, bisect, hooks |
-| 5–6 | Terraform | Provision infrastructure |
-| 7–10 | Kubernetes core | Deploy apps, services, ingress |
-| 11–12 | Helm + K8s storage | Charts, StatefulSets |
-| 13–14 | K8s security | RBAC, NetworkPolicies, Pod Security |
-| 15–16 | Ansible | Configuration management |
-| 17–18 | CI/CD (GitHub Actions + ArgoCD) | Full pipeline |
-| 19–22 | Cloud platform (pick one) | Deep study + certification |
-| 23–24 | Monitoring | Prometheus, Grafana, Loki |
-| 25 | Security basics | SAST, container scanning |
-| 26–28 | Project 1: automated pipeline | Build end-to-end |
-| 29–32 | Project 2: multi-tier app on K8s | Build end-to-end |
-| 33–36 | Advanced: operator, service mesh | Differentiate |
-| 37+ | Interview prep + job search | System design, behavioral |
+| 1 | Linux gaps + Bash scripting | Identify and fill your Linux knowledge gaps |
+| 2 | Networking fundamentals | TCP, DNS, TLS hands-on with tcpdump |
+| 3 | DevOps mindset (Phase 0.5) | Study 12-Factor App, cattle-vs-pets, idempotency |
+| 4 | Terraform fundamentals | Provision VPC + EC2 + S3, remote state |
+| 5–6 | Terraform advanced | Modules, workspaces, CI/CD pipeline |
+| 7–10 | Kubernetes core | Deploy apps, services, ingress, cert-manager |
+| 11–12 | Helm + K8s storage + security | Charts, StatefulSets, RBAC, NetworkPolicies |
+| 13–14 | Ansible | Configuration management |
+| 15–17 | CI/CD (GitHub Actions + ArgoCD) | Full pipeline with GitOps |
+| 18–21 | Cloud platform (pick one) | Deep study + certification prep |
+| 22–24 | Monitoring + Observability | Prometheus, Grafana, Loki, OpenTelemetry |
+| 25 | Security (DevSecOps) | SAST, container scanning, secrets management |
+| 26–29 | Project 1: automated pipeline | Build end-to-end CI/CD + GitOps |
+| 30–33 | Project 2: multi-tier app on K8s | Build end-to-end with security hardening |
+| 34–36 | Interview prep + job search | System design, behavioral, salary negotiation |
 
 ---
 
-*Remember: DevOps is a culture and practice, not a tool set. A senior DevOps engineer who knows Bash, Linux, and networking fundamentals will outperform a junior who has watched 10 hours of "Kubernetes CRASH course" videos. Build real things. Break them. Fix them. That's the entire curriculum.*
+## Salary & Market Outlook (2025-2026)
+
+### Salary Ranges by Region (Junior DevOps / first role)
+
+| Region | Junior/SRE I | Mid-Level | Senior |
+|---|---|---|---|
+| **US (SF/NYC/Seattle)** | $110K–$140K | $150K–$190K | $200K–$260K |
+| **US (other metros)** | $90K–$120K | $130K–$165K | $170K–$220K |
+| **Canada** | CAD $85K–$110K | CAD $120K–$150K | CAD $155K–$190K |
+| **UK (London)** | GBP 50K–£70K | GBP 75K–£95K | GBP 100K–£130K |
+| **Germany** | EUR 55K–€70K | EUR 75K–€95K | EUR 100K–€120K |
+| **Netherlands** | EUR 50K–€65K | EUR 70K–€90K | EUR 95K–€115K |
+| **Australia** | AUD $100K–$130K | AUD $140K–$170K | AUD $180K–$220K |
+| **Singapore** | SGD $70K–$95K | SGD $100K–$140K | SGD $150K–$190K |
+| **India (Bangalore)** | INR 8L–15L | INR 18L–30L | INR 35L–60L |
+| **Indonesia (Jakarta)** | IDR 180M–350M | IDR 400M–700M | IDR 800M–1.5B |
+| **Remote (Global)** | $80K–$120K | $130K–$170K | $180K–$240K |
+
+Note: Remote salaries vary by company HQ location. US-based remote companies pay US-adjusted rates.
+
+### Most In-Demand Skills (Job Posting Analysis)
+
+Ranked by frequency in DevOps/SRE job descriptions:
+
+1. **Kubernetes** — 85%+ of postings. CKA certification is the strongest signal.
+2. **Terraform** — 75%+. OpenTofu growing but still niche.
+3. **CI/CD** — GitHub Actions (60%), GitLab CI (35%), Jenkins (25% but declining).
+4. **AWS** — 65%+. GCP (30%), Azure (28%). Most roles expect at least one cloud.
+5. **Docker** — Assumed knowledge, rarely listed explicitly now.
+6. **ArgoCD** — 35%+ and growing. GitOps is the new standard.
+7. **Monitoring** — Prometheus (55%), Grafana (50%), Datadog (30%).
+8. **Scripting** — Bash (ubiquitous), Python (65%), Go (40% and growing for platform engineering).
+9. **Helm** — 50%+. Expected for any K8s role.
+10. **Git** — Assumed. Advanced workflows (branching strategy, rebase, bisect) differentiate.
+
+### SWE Advantage
+
+Your programming background is a competitive edge. Many DevOps candidates come from sysadmin backgrounds and lack software engineering fundamentals. DevOps roles increasingly demand coding ability for:
+
+- Writing Kubernetes operators (Go)
+- Building internal platform tooling (Python, TypeScript)
+- Infrastructure testing (Go, Python)
+- CI/CD pipeline scripting (Bash, Python)
+- Custom Terraform providers (Go)
+
+Lean into this. Your SWE skills + DevOps tooling = Platform Engineer, the most lucrative DevOps-adjacent role.
+
+---
+
+*Remember: DevOps is a culture and practice, not a tool set. Your SWE background gives you a head start — you already think in systems, abstractions, and automation. Build real things. Break them. Fix them. That is the entire curriculum.*
