@@ -11,7 +11,7 @@ echo ""
 app_dirs=()
 while IFS= read -r dir; do
   app_dirs+=("$dir")
-done < <(find "$APPS_DIR" -maxdepth 1 -mindepth 1 -type d | sort)
+done < <(find "$APPS_DIR" -maxdepth 1 -mindepth 1 -type d -not -name '.*' -not -name 'shared' | sort)
 
 for i in "${!app_dirs[@]}"; do
   app_name=$(basename "${app_dirs[$i]}")
@@ -85,7 +85,7 @@ case "$app_name" in
     has_clusterissuer=1
     ;;
   beszel)
-    required_vars=(DOMAIN EMAIL IMAGE)
+    required_vars=(DOMAIN EMAIL IMAGE KEY TOKEN)
     k8s_dir="beszel"
     apply_order=(argocd-application secret services pvc deployment daemonset ingress)
     has_clusterissuer=1
@@ -120,6 +120,14 @@ if [[ "$has_clusterissuer" == 1 ]]; then
   if kubectl api-resources --api-group=cert-manager.io 2>/dev/null | grep -q issuers; then
     cd "$k8s_path/shared"
     render_apply clusterissuer.yaml
+
+    if kubectl api-resources --api-group=traefik.io 2>/dev/null | grep -q middlewares; then
+      for mw in middleware/*.yaml; do
+        [[ -f "$mw" ]] && kubectl apply -f "$mw"
+      done
+    else
+      echo "  Traefik CRDs not found - skipping middlewares. Install Traefik first." >&2
+    fi
   else
     echo "  cert-manager CRDs not found - skipping ClusterIssuer. Install cert-manager first." >&2
   fi
