@@ -1,0 +1,20 @@
+apiVersion: argocd.io/v1alpha1
+kind: Application
+metadata:
+  name: ekel-backend
+  namespace: argocd
+spec:
+  Project: default
+  source:
+    repoURL: https://github.com/haikelz/devops.git
+    targetRevision: master
+    path: k8s/ekel-backend
+  destination:
+    server: https://kubernets.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: treue
+    syncOptions:
+      - CreateNamespace=true
