@@ -27,13 +27,13 @@ Ansible adalah **automation engine** open-source buatan Red Hat. Ia melakukan **
 
 ### Kenapa Ansible?
 
-| Fitur | Penjelasan |
-|---|---|
-| **Agentless** | Tidak perlu install agent di server target. Hanya perlu SSH + Python. |
-| **Idempotent** | Menjalankan task yang sama berkali-kali = hasil yang sama. Aman. |
-| **YAML-based** | Playbook ditulis dalam YAML — mudah dibaca manusia. |
-| **Push-based** | Control node PUSH konfigurasi ke managed nodes. |
-| **Module-rich** | Ribuan modul built-in: package, file, service, cloud, database, dll. |
+| Fitur           | Penjelasan                                                            |
+| --------------- | --------------------------------------------------------------------- |
+| **Agentless**   | Tidak perlu install agent di server target. Hanya perlu SSH + Python. |
+| **Idempotent**  | Menjalankan task yang sama berkali-kali = hasil yang sama. Aman.      |
+| **YAML-based**  | Playbook ditulis dalam YAML — mudah dibaca manusia.                   |
+| **Push-based**  | Control node PUSH konfigurasi ke managed nodes.                       |
+| **Module-rich** | Ribuan modul built-in: package, file, service, cloud, database, dll.  |
 
 ### Arsitektur
 
@@ -102,7 +102,6 @@ mkdir -p ~/ansible-lab
 cd ~/ansible-lab
 ```
 
-
 ## 3. Inventory — Daftar Server Target
 
 Inventory adalah file yang mendefinisikan managed nodes. Format: INI atau YAML.
@@ -150,7 +149,7 @@ all:
   hosts:
     local-vm:
       ansible_host: 127.0.0.1
-      ansible_connection: local        # lokal -> tanpa SSH
+      ansible_connection: local # lokal -> tanpa SSH
   children:
     webservers:
       hosts:
@@ -335,7 +334,6 @@ ansible all -i inventory-local.yml -m command -a "ls -la /tmp/ansible-test"
 ansible all -i inventory-local.yml -m file -a "path=/tmp/ansible-test state=absent"
 ```
 
-
 ## 5. Playbook — Automation Blueprint
 
 Playbook adalah file YAML berisi daftar **plays** (apa yang dikerjakan, di host mana).
@@ -431,7 +429,7 @@ Buat file `setup-webserver.yml`:
         state: directory
         owner: www-data
         group: www-data
-        mode: '0755'
+        mode: "0755"
 
     - name: Copy custom index.html
       ansible.builtin.copy:
@@ -447,7 +445,7 @@ Buat file `setup-webserver.yml`:
         dest: /var/www/mysite/index.html
         owner: www-data
         group: www-data
-        mode: '0644'
+        mode: "0644"
 
     - name: Configure Nginx site
       ansible.builtin.copy:
@@ -487,6 +485,7 @@ Buat file `setup-webserver.yml`:
 ### 5.4 Memahami Handlers
 
 Handlers adalah task yang HANYA dijalankan jika di-trigger oleh `notify`.
+
 - Jika TIDAK ADA perubahan di task yang me-notify -> handler TIDAK dijalankan
 - Jika ADA perubahan -> handler dijalankan **sekali saja** di akhir play
 
@@ -495,12 +494,12 @@ Handlers adalah task yang HANYA dijalankan jika di-trigger oleh `notify`.
 ```yaml
 - name: Contoh task dengan semua opsi kontrol
   ansible.builtin.command: /usr/bin/some-command
-  ignore_errors: yes         # Lanjut meskipun error
-  changed_when: false        # Jangan tandai sebagai "changed"
-  failed_when:               # Custom failure condition
+  ignore_errors: yes # Lanjut meskipun error
+  changed_when: false # Jangan tandai sebagai "changed"
+  failed_when: # Custom failure condition
     - result.rc != 0
     - "'FATAL' in result.stderr"
-  register: my_result        # Simpan output ke variable
+  register: my_result # Simpan output ke variable
   tags:
     - setup
     - critical
@@ -512,7 +511,6 @@ Menjalankan dengan tag:
 ansible-playbook playbook.yml --tags setup
 ansible-playbook playbook.yml --skip-tags critical
 ```
-
 
 ## 6. Variables — Data Dinamis
 
@@ -693,8 +691,8 @@ Nonaktifkan fact gathering jika tidak diperlukan:
         state: present
       loop:
         - { name: "alice", group: "developers", shell: "/bin/bash" }
-        - { name: "bob",   group: "developers", shell: "/bin/bash" }
-        - { name: "carol", group: "admins",     shell: "/bin/zsh" }
+        - { name: "bob", group: "developers", shell: "/bin/bash" }
+        - { name: "carol", group: "admins", shell: "/bin/zsh" }
 ```
 
 ### 7.3 `block` — Grouping Tasks + Error Handling
@@ -721,7 +719,6 @@ Nonaktifkan fact gathering jika tidak diperlukan:
             path: /tmp/lockfile
             state: absent
 ```
-
 
 ## 8. Roles — Modular Automation
 
@@ -775,7 +772,7 @@ mkdir -p roles/webserver/{tasks,handlers,vars,defaults,templates,files,meta}
     state: directory
     owner: "{{ web_user }}"
     group: "{{ web_user }}"
-    mode: '0755'
+    mode: "0755"
 
 - name: Deploy index.html from template
   ansible.builtin.template:
@@ -783,7 +780,7 @@ mkdir -p roles/webserver/{tasks,handlers,vars,defaults,templates,files,meta}
     dest: "{{ web_root }}/index.html"
     owner: "{{ web_user }}"
     group: "{{ web_user }}"
-    mode: '0644'
+    mode: "0644"
 
 - name: Deploy Nginx config from template
   ansible.builtin.template:
@@ -959,12 +956,11 @@ Output:
 
 ```yaml
 db_password: !vault |
-          $ANSIBLE_VAULT;1.1;AES256
-          66386439653236336...
+  $ANSIBLE_VAULT;1.1;AES256
+  66386439653236336...
 ```
 
 Copy-paste ke file `group_vars/all.yml`.
-
 
 ## 10. Real-World Projects
 
@@ -1053,15 +1049,15 @@ Gunakan role webserver dari Section 8.
     - name: Disable root SSH login
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
-        regexp: '^PermitRootLogin'
-        line: 'PermitRootLogin no'
+        regexp: "^PermitRootLogin"
+        line: "PermitRootLogin no"
       notify: Restart SSH
 
     - name: Disable password authentication
       ansible.builtin.lineinfile:
         path: /etc/ssh/sshd_config
-        regexp: '^PasswordAuthentication'
-        line: 'PasswordAuthentication no'
+        regexp: "^PasswordAuthentication"
+        line: "PasswordAuthentication no"
       notify: Restart SSH
 
     - name: Setup firewall
@@ -1069,7 +1065,7 @@ Gunakan role webserver dari Section 8.
         rule: allow
         port: "{{ item }}"
         proto: tcp
-      loop: ['22', '80', '443']
+      loop: ["22", "80", "443"]
 
     - name: Enable UFW
       ansible.builtin.ufw:
@@ -1164,7 +1160,6 @@ Gunakan role webserver dari Section 8.
           - "{{ app_port }}:80"
 ```
 
-
 ## 11. Cheatsheet & Referensi Cepat
 
 ### 11.1 Command Dasar
@@ -1206,28 +1201,28 @@ ansible-playbook playbook.yml --list-tags
 
 ### 11.2 Module Paling Sering Dipakai
 
-| Module | Kegunaan | Contoh |
-|---|---|---|
-| `ansible.builtin.ping` | Cek konektivitas | `ansible all -m ping` |
-| `ansible.builtin.command` | Jalankan command (no shell) | `-a "uptime"` |
-| `ansible.builtin.shell` | Jalankan command (with shell) | `-a "ps aux | grep nginx"` |
-| `ansible.builtin.copy` | Copy file | `src=/local/file dest=/remote/file` |
-| `ansible.builtin.template` | Copy + render Jinja2 | `src=config.j2 dest=/etc/app.conf` |
-| `ansible.builtin.file` | Manage file/dir/symlink | `path=/tmp/dir state=directory` |
-| `ansible.builtin.apt` | Package manager (Debian) | `name=nginx state=present` |
-| `ansible.builtin.yum` | Package manager (RHEL) | `name=nginx state=present` |
-| `ansible.builtin.service` | Manage service | `name=nginx state=started` |
-| `ansible.builtin.user` | Manage user | `name=alice state=present` |
-| `ansible.builtin.group` | Manage group | `name=developers state=present` |
-| `ansible.builtin.lineinfile` | Edit satu baris di file | `regexp=... line=...` |
-| `ansible.builtin.stat` | Cek file info | `path=/etc/hosts` -> register |
-| `ansible.builtin.debug` | Print debug message | `msg="Hello {{ var }}"` |
-| `ansible.builtin.set_fact` | Set variable dinamis | `key=value` |
-| `ansible.builtin.wait_for` | Tunggu port/file/condition | `port=80 state=started` |
-| `ansible.builtin.get_url` | Download file | `url=... dest=/tmp/file` |
-| `ansible.builtin.uri` | HTTP request | `url=http://localhost status_code=200` |
-| `ansible.builtin.git` | Git operations | `repo=... dest=/path` |
-| `ansible.builtin.cron` | Manage cron jobs | `name="backup" job="/script.sh"` |
+| Module                       | Kegunaan                      | Contoh                                 |
+| ---------------------------- | ----------------------------- | -------------------------------------- | ------------ |
+| `ansible.builtin.ping`       | Cek konektivitas              | `ansible all -m ping`                  |
+| `ansible.builtin.command`    | Jalankan command (no shell)   | `-a "uptime"`                          |
+| `ansible.builtin.shell`      | Jalankan command (with shell) | `-a "ps aux                            | grep nginx"` |
+| `ansible.builtin.copy`       | Copy file                     | `src=/local/file dest=/remote/file`    |
+| `ansible.builtin.template`   | Copy + render Jinja2          | `src=config.j2 dest=/etc/app.conf`     |
+| `ansible.builtin.file`       | Manage file/dir/symlink       | `path=/tmp/dir state=directory`        |
+| `ansible.builtin.apt`        | Package manager (Debian)      | `name=nginx state=present`             |
+| `ansible.builtin.yum`        | Package manager (RHEL)        | `name=nginx state=present`             |
+| `ansible.builtin.service`    | Manage service                | `name=nginx state=started`             |
+| `ansible.builtin.user`       | Manage user                   | `name=alice state=present`             |
+| `ansible.builtin.group`      | Manage group                  | `name=developers state=present`        |
+| `ansible.builtin.lineinfile` | Edit satu baris di file       | `regexp=... line=...`                  |
+| `ansible.builtin.stat`       | Cek file info                 | `path=/etc/hosts` -> register          |
+| `ansible.builtin.debug`      | Print debug message           | `msg="Hello {{ var }}"`                |
+| `ansible.builtin.set_fact`   | Set variable dinamis          | `key=value`                            |
+| `ansible.builtin.wait_for`   | Tunggu port/file/condition    | `port=80 state=started`                |
+| `ansible.builtin.get_url`    | Download file                 | `url=... dest=/tmp/file`               |
+| `ansible.builtin.uri`        | HTTP request                  | `url=http://localhost status_code=200` |
+| `ansible.builtin.git`        | Git operations                | `repo=... dest=/path`                  |
+| `ansible.builtin.cron`       | Manage cron jobs              | `name="backup" job="/script.sh"`       |
 
 ### 11.3 Jinja2 Filter Berguna
 
@@ -1288,16 +1283,16 @@ control_path = /tmp/ansible-%%h-%%p-%%r
 
 ### 11.5 Error Umum & Solusi
 
-| Error | Penyebab | Solusi |
-|---|---|---|
-| `UNREACHABLE` | SSH gagal | Cek IP, user, port, firewall, SSH key |
-| `Permission denied` | Tidak ada sudo | Tambah `-b` / `become: yes` |
-| `No such file` | File tidak ditemukan | Cek path, gunakan absolute path |
-| `apt lock` | Ada proses apt lain | Tunggu, atau `kill` proses apt |
-| `syntax error` | YAML tidak valid | Cek indentasi (harus 2 spasi) |
-| `undefined variable` | Variable tidak diset | Cek scope, gunakan `| default()` |
-| `changed=0` | Idempotent, tidak ada yang berubah | Normal. Ansible tidak melakukan apa-apa karena state sudah sesuai |
-| `failed: [...] msg: ...` | Task gagal | Baca pesan error di msg field |
+| Error                    | Penyebab                           | Solusi                                                            |
+| ------------------------ | ---------------------------------- | ----------------------------------------------------------------- | ---------- |
+| `UNREACHABLE`            | SSH gagal                          | Cek IP, user, port, firewall, SSH key                             |
+| `Permission denied`      | Tidak ada sudo                     | Tambah `-b` / `become: yes`                                       |
+| `No such file`           | File tidak ditemukan               | Cek path, gunakan absolute path                                   |
+| `apt lock`               | Ada proses apt lain                | Tunggu, atau `kill` proses apt                                    |
+| `syntax error`           | YAML tidak valid                   | Cek indentasi (harus 2 spasi)                                     |
+| `undefined variable`     | Variable tidak diset               | Cek scope, gunakan `                                              | default()` |
+| `changed=0`              | Idempotent, tidak ada yang berubah | Normal. Ansible tidak melakukan apa-apa karena state sudah sesuai |
+| `failed: [...] msg: ...` | Task gagal                         | Baca pesan error di msg field                                     |
 
 ### 11.6 Learning Path Lanjutan
 
