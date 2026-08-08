@@ -66,8 +66,8 @@ spec:
           volumeMounts:
             - name: picoclaw-data
               mountPath: /root/.picoclaw
+      containers:
         - name: picoclaw
-          image: ${IMAGE}
           imagePullPolicy: Always
           env:
             - name: TZ
