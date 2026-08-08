@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   finalizers: [resources-finalizer.argocd.argoproj.io]
 spec:
-  project: default
+  project: bots
   source:
     repoURL: https://github.com/haikelz/ai-assistant
     targetRevision: master

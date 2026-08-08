@@ -4,7 +4,7 @@ metadata:
   name: ryuko-matoi-go
   namespace: argocd
 spec:
-  project: default
+  project: bots
   source:
     repoURL: https://github.com/haikelz/devops.git
     targetRevision: master

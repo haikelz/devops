@@ -4,7 +4,7 @@ metadata:
   name: beszel
   namespace: argocd
 spec:
-  project: default
+  project: monitoring
   source:
     repoURL: https://github.com/haikelz/devops.git
     targetRevision: master
