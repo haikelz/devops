@@ -68,7 +68,7 @@ spec:
               mountPath: /root/.picoclaw
       containers:
         - name: picoclaw
-          imagePullPolicy: Always
+          image: ${IMAGE}
           env:
             - name: TZ
               value: Asia/Jakarta
