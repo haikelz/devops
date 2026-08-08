@@ -36,6 +36,8 @@ spec:
               mv /root/.picoclaw/config.json.tmp /root/.picoclaw/config.json
               chmod 600 /root/.picoclaw/config.json
               if [ ! -f /root/.picoclaw/workspace/SOUL.md ]; then cp -R /seed/workspace /root/.picoclaw/workspace; fi
+              mkdir -p /root/.picoclaw/workspace/skills/job-search
+              cp /seed/workspace/skills/job-search/SKILL.md /root/.picoclaw/workspace/skills/job-search/SKILL.md
               printf 'channels:\n  telegram:\n    settings:\n      token: "%s"\n' "$(printenv TELEGRAM_BOT_TOKEN)" > /root/.picoclaw/.security.yml
               chmod 600 /root/.picoclaw/.security.yml
           envFrom:
