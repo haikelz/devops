@@ -11,7 +11,7 @@ spec:
     path: k8s/ryuko-matoi-go
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: bots
   syncPolicy:
     automated:
       prune: true

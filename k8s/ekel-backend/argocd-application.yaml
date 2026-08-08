@@ -11,7 +11,7 @@ spec:
     path: k8s/ekel-backend
   destination:
     server: https://kubernets.default.svc
-    namespace: default
+    namespace: ekel
   syncPolicy:
     automated:
       prune: true

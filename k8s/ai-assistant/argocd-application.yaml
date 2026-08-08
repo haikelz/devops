@@ -12,13 +12,13 @@ spec:
     path: k8s
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: bots
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     retry:
       limit: 3
-      backoff: {duration: 5s, factor: 2, maxDuration: 1m}
+      backoff: { duration: 5s, factor: 2, maxDuration: 1m }
     syncOptions:
       - CreateNamespace=true
