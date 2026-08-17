@@ -19,7 +19,6 @@ kind: Application
 metadata:
   name: ryuko-matoi-go
   namespace: argocd
-  finalizers: [resources-finalizer.argocd.argoproj.io]
 spec:
   project: bots
   source:
