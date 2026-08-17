@@ -1,4 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: bots
+  namespace: argocd
+spec:
+  description: AI assistant
+  sourceRepos:
+    - "https://github.com/haikelz/ai-assistant.git"
+  destinations:
+    - namespace: bots
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: ai-assistant
@@ -10,6 +26,8 @@ spec:
     repoURL: https://github.com/haikelz/ai-assistant
     targetRevision: master
     path: k8s
+    directory:
+      exclude: "{argocd-application.yaml,argocd-app-project.yaml}"
   destination:
     server: https://kubernetes.default.svc
     namespace: bots
@@ -19,6 +37,9 @@ spec:
       selfHeal: true
     retry:
       limit: 3
-      backoff: { duration: 5s, factor: 2, maxDuration: 1m }
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
     syncOptions:
       - CreateNamespace=true

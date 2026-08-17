@@ -19,6 +19,7 @@ kind: Application
 metadata:
   name: ryuko-matoi-go
   namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
 spec:
   project: bots
   source:
@@ -34,5 +35,11 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
     syncOptions:
       - CreateNamespace=true
