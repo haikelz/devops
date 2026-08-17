@@ -75,7 +75,7 @@ case "$app_name" in
   argocd)
     required_vars=(DOMAIN EMAIL)
     k8s_dir="argocd"
-    apply_order=(secret services ingress)
+    apply_order=(argocd-cm secret services ingress)
     has_clusterissuer=1
     ;;
   ekel-backend)
