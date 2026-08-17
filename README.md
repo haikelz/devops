@@ -24,7 +24,7 @@ A monorepo (`k8s/`) deploying real applications via Kubernetes manifests:
 | **mbakmegumi** | Astro 6 + React 19 + GSAP + Three.js | Interactive frontend served through nginx, with Docker multi-stage builds |
 | **ryuko-matoi-go** | Go + whatsmeow + SQLite + AI APIs | WhatsApp bot with finance tracking, scheduling, OCR, and multi-platform posting |
 | **goatcounter** | Go | Privacy-focused web analytics with PVC for persistent SQLite storage |
-| **ai-assistant** | Python + Telegram API | Telegram bot with AI integration via SumoPod API, PVC for persistent data |
+| **ai-assistant** | Go + picoclaw (Telegram) | Telegram AI assistant: finance ledger (Go), Google Sheets sync, and job-alert scraping Glints + Jobstreet. PVC for persistent data |
 | **ekel-backend** | Go + Echo + Turso/libSQL | API for Wakatime stats, IHSG market data, guestbook, and reactions |
 | **argocd** | ArgoCD | GitOps operator managing declarative deployments from this repo |
 | **beszel** | Go + Svelte | Lightweight server monitoring with agent (DaemonSet) + hub (Deployment) |
@@ -89,7 +89,7 @@ devops/
 │   ├── mbakmegumi/         # Astro + React frontend (K8s manifests)
 │   ├── ryuko-matoi-go/     # Go WhatsApp bot (K8s manifests)
 │   ├── goatcounter/        # Go analytics (K8s manifests)
-│   ├── ai-assistant/       # Python Telegram bot (K8s manifests)
+│   ├── ai-assistant/       # Go + picoclaw Telegram bot (K8s manifests)
 │   ├── ekel-backend/       # Go Echo API (K8s manifests)
 │   ├── argocd/             # ArgoCD operator config
 │   ├── beszel/             # Beszel monitoring (K8s manifests)

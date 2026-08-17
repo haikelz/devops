@@ -46,3 +46,5 @@ logs/
 
 prompts/
 # <<< create-ai-ignore managed
+
+*secret.yaml
