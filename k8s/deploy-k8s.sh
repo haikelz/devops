@@ -69,7 +69,7 @@ case "$app_name" in
   ai-assistant)
     required_vars=(IMAGE SUMOPOD_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
     k8s_dir="ai-assistant"
-    apply_order=(argocd-application pvc secret services network-policy deployment)
+    apply_order=(argocd-application)
     has_clusterissuer=0
     ;;
   argocd)
