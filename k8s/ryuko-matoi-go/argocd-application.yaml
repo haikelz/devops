@@ -1,4 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: bots
+  namespace: argocd
+spec:
+  description: Bot applications
+  sourceRepos:
+    - "https://github.com/haikelz/devops.git"
+  destinations:
+    - namespace: bots
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: ryuko-matoi-go
@@ -9,6 +25,8 @@ spec:
     repoURL: https://github.com/haikelz/devops.git
     targetRevision: master
     path: k8s/ryuko-matoi-go
+    directory:
+      exclude: "{argocd-application.yaml,argocd-app-project.yaml}"
   destination:
     server: https://kubernetes.default.svc
     namespace: bots

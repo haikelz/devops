@@ -63,7 +63,7 @@ case "$app_name" in
   ryuko-matoi-go)
     required_vars=(IMAGE REMOVE_BG_API_KEY AI_API_KEY AI_PROVIDER AI_MODEL WHATSAPP_SESSION_PATH WHATSAPP_DATABASE_DIALECT WHATSAPP_EVENT_BUFFER_SIZE)
     k8s_dir="ryuko-matoi-go"
-    apply_order=(argocd-application pvc secret services network-policy deployment)
+    apply_order=(argocd-application)
     has_clusterissuer=0
     ;;
   ai-assistant)
