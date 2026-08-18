@@ -38,7 +38,8 @@ spec:
               if [ ! -f /root/.picoclaw/workspace/SOUL.md ]; then cp -R /seed/workspace /root/.picoclaw/workspace; fi
               mkdir -p /root/.picoclaw/workspace/skills/job-search
               cp /seed/workspace/skills/job-search/SKILL.md /root/.picoclaw/workspace/skills/job-search/SKILL.md
-              printf 'channels:\n  telegram:\n    settings:\n      token: "%s"\n' "$(printenv TELEGRAM_BOT_TOKEN)" > /root/.picoclaw/.security.yml
+              CLEAN_BOT_TOKEN=$(printenv TELEGRAM_BOT_TOKEN | tr -d '\r\n')
+              printf 'channels:\n  telegram:\n    settings:\n      token: "%s"\n' "$CLEAN_BOT_TOKEN" > /root/.picoclaw/.security.yml
               chmod 600 /root/.picoclaw/.security.yml
           envFrom:
             - secretRef:
