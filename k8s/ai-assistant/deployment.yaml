@@ -52,17 +52,15 @@ spec:
           command: ["/bin/sh", "-ec"]
           args:
             - |
-              if ! picoclaw cron list | grep -Fq monthly-paycheck-reminder; then
+              if ! picoclaw cron list 2>/dev/null | grep -Fq monthly-paycheck-reminder; then
                 picoclaw cron add --name monthly-paycheck-reminder --cron "0 9 28 * *" --channel telegram --to "$(printenv TELEGRAM_USER_ID)" --message "Today is the 28th in Asia/Jakarta. Ask the user for their payday amount in rupiah. When they give a clear amount, record it as Modal through the finance-ledger skill and confirm the total money."
               fi
           env:
             - name: TZ
               value: Asia/Jakarta
-            - name: TELEGRAM_USER_ID
-              valueFrom:
-                secretKeyRef:
-                  name: ai-assistant-env
-                  key: TELEGRAM_USER_ID
+          envFrom:
+            - secretRef:
+                name: ai-assistant-env
           volumeMounts:
             - name: picoclaw-data
               mountPath: /root/.picoclaw
