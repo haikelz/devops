@@ -31,7 +31,7 @@ spec:
               mkdir -p /root/.picoclaw
               jq '
                 .channel_list.telegram.allow_from = [env.TELEGRAM_USER_ID]
-                | .model_list |= map(if .model_name == "deepseek-v4-pro" then .api_keys = [env.SUMOPOD_API_KEY] else . end)
+                | .model_list |= map(if .model_name == "deepseek-v4-flash" then .api_keys = [env.SUMOPOD_API_KEY] else . end)
               ' /seed/config.json > /root/.picoclaw/config.json.tmp
               mv /root/.picoclaw/config.json.tmp /root/.picoclaw/config.json
               chmod 600 /root/.picoclaw/config.json
@@ -53,8 +53,9 @@ spec:
           command: ["/bin/sh", "-ec"]
           args:
             - |
+              CLEAN_USER_ID=$(printenv TELEGRAM_USER_ID | tr -d '\r\n')
               if ! picoclaw cron list 2>/dev/null | grep -Fq monthly-paycheck-reminder; then
-                picoclaw cron add --name monthly-paycheck-reminder --cron "0 9 28 * *" --channel telegram --to "$(printenv TELEGRAM_USER_ID)" --message "Today is the 28th in Asia/Jakarta. Ask the user for their payday amount in rupiah. When they give a clear amount, record it as Modal through the finance-ledger skill and confirm the total money."
+                picoclaw cron add --name monthly-paycheck-reminder --cron "0 9 28 * *" --channel telegram --to "$CLEAN_USER_ID" --message "Today is the 28th in Asia/Jakarta. Ask the user for their payday amount in rupiah. When they give a clear amount, record it as Modal through the finance-ledger skill and confirm the total money." || true
               fi
           env:
             - name: TZ
