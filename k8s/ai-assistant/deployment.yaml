@@ -82,6 +82,7 @@ spec:
       containers:
         - name: picoclaw
           image: haikelilham/ai-assistant:latest
+          imagePullPolicy: Always
           env:
             - name: TZ
               value: Asia/Jakarta
