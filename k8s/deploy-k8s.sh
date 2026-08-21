@@ -67,7 +67,16 @@ case "$app_name" in
     has_clusterissuer=0
     ;;
   ai-assistant)
-    required_vars=(IMAGE SUMOPOD_API_KEY TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
+    required_vars=(IMAGE AI_PROVIDER AI_MODEL TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
+    case "${AI_PROVIDER:-}" in
+      sumopod) required_vars+=(SUMOPOD_API_KEY) ;;
+      google) required_vars+=(GOOGLE_API_KEY) ;;
+      openai) required_vars+=(OPENAI_API_KEY) ;;
+      *)
+        echo "AI_PROVIDER must be sumopod, google, or openai." >&2
+        exit 1
+        ;;
+    esac
     k8s_dir="ai-assistant"
     apply_order=(pvc secret services network-policy deployment)
     has_clusterissuer=0
