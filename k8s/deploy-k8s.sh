@@ -77,6 +77,17 @@ case "$app_name" in
         exit 1
         ;;
     esac
+    if [[ -n "${MAIL_TO:-}" ]]; then
+      required_vars+=(MAIL_MAILER MAIL_USERNAME MAIL_PASSWORD MAIL_HOST MAIL_PORT MAIL_ENCRYPTION MAIL_FROM MAIL_TO)
+      if [[ "${MAIL_MAILER,,}" != "smtp" ]]; then
+        echo "MAIL_MAILER must be smtp." >&2
+        exit 1
+      fi
+      if [[ "${MAIL_ENCRYPTION,,}" != "ssl" ]]; then
+        echo "MAIL_ENCRYPTION must be ssl." >&2
+        exit 1
+      fi
+    fi
     k8s_dir="ai-assistant"
     apply_order=(pvc secret services network-policy deployment)
     has_clusterissuer=0
