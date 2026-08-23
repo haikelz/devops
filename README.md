@@ -24,7 +24,7 @@ A monorepo (`k8s/`) deploying real applications via Kubernetes manifests:
 | **mbakmegumi** | Astro 6 + React 19 + GSAP + Three.js | Interactive frontend served through nginx, with Docker multi-stage builds |
 | **ryuko-matoi-go** | Go + whatsmeow + SQLite + AI APIs | WhatsApp bot with finance tracking, scheduling, OCR, and multi-platform posting |
 | **goatcounter** | Go | Privacy-focused web analytics with PVC for persistent SQLite storage |
-| **ai-assistant** | Go + picoclaw (Telegram) | Telegram AI assistant with configurable Sumopod/Gemini/OpenAI, finance ledger, and Kitalulus/Dealls job alerts with optional halal labeling. PVC for persistent data |
+| **ai-assistant** | Go + picoclaw (Telegram) | Telegram AI assistant with configurable Sumopod/Gemini/OpenAI, finance ledger, and a Glints/Kitalulus/Dealls curated job pipeline with SQLite dedupe, halal labels, WhatsApp, and SMTP delivery. PVC for persistent data |
 | **ekel-backend** | Go + Echo + Turso/libSQL | API for Wakatime stats, IHSG market data, guestbook, and reactions |
 | **argocd** | ArgoCD | GitOps operator managing declarative deployments from this repo |
 | **beszel** | Go + Svelte | Lightweight server monitoring with agent (DaemonSet) + hub (Deployment) |

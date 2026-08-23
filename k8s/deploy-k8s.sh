@@ -68,6 +68,14 @@ case "$app_name" in
     ;;
   ai-assistant)
     required_vars=(IMAGE AI_PROVIDER AI_MODEL TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
+    : "${JOB_ALERT_PIPELINE_ENABLED:=true}"
+    : "${GLINTS_ENABLED:=true}"
+    : "${JOB_ALERT_DB_PATH:=/root/.picoclaw/jobs.db}"
+    : "${JOB_ALERT_MAX_QUERIES:=5}"
+    : "${JOB_ALERT_AI_BATCH_SIZE:=5}"
+    : "${JOB_ALERT_MIN_MATCH_SCORE:=70}"
+    export JOB_ALERT_PIPELINE_ENABLED GLINTS_ENABLED JOB_ALERT_DB_PATH
+    export JOB_ALERT_MAX_QUERIES JOB_ALERT_AI_BATCH_SIZE JOB_ALERT_MIN_MATCH_SCORE
     case "${AI_PROVIDER:-}" in
       sumopod) required_vars+=(SUMOPOD_API_KEY) ;;
       google) required_vars+=(GOOGLE_API_KEY) ;;
