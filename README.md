@@ -8,9 +8,10 @@ All of the guide .md in this repo is AI-GENERATED and used for me to deep dive i
 
 GCP provisioning with HashiCorp Terraform:
 
-- **Storage**: `google_storage_bucket` resource for object storage
-- **Kubernetes**: GKE cluster provisioning via `google_container_cluster` and node pools
-- **State management**: local `terraform.tfstate` tracking
+- **Networking**: dedicated VPC, subnet, Pod and Service ranges, plus Cloud NAT for private nodes
+- **Kubernetes**: regional GKE provisioning via `google_container_cluster` and a managed node pool
+- **Security**: private nodes, Workload Identity, Shielded GKE nodes, network-policy enforcement, and authorized control-plane networks
+- **State management**: local `terraform.tfstate` tracking; configure a remote GCS backend before shared use
 
 Familiarises with: providers, resources, variables, outputs, state files, and the `plan`/`apply` workflow.
 
@@ -63,9 +64,12 @@ Zero manual `kubectl` commands — one script deploys each app end-to-end.
 ```bash
 # 1. Bootstrap GCP infrastructure
 cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your project ID, region, and administrator/CI CIDRs.
 terraform init
 terraform plan
 terraform apply
+terraform output -raw get_credentials_command
 
 # 2. Deploy an application
 cd k8s/<app-name>
@@ -80,8 +84,8 @@ cd ..
 ```
 devops/
 ├── terraform/              # GCP infrastructure (Terraform)
-│   ├── main.tf             # Provider + bucket resource
-│   ├── gke.tf              # GKE cluster definition
+│   ├── main.tf             # Provider, VPC, subnet, and Cloud NAT
+│   ├── gke.tf              # GKE cluster and node-pool definitions
 │   ├── variables.tf        # Input variables
 │   └── output.tf           # Stack outputs
 ├── k8s/                    # Kubernetes orchestration monorepo

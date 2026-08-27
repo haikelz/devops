@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars and replace these values. Do not commit terraform.tfvars.
+project_id = "your-gcp-project-id"
+region     = "asia-southeast2"
+
+# Restrict the Kubernetes API to the networks used by administrators or CI.
+master_authorized_networks = [
+  {
+    cidr_block   = "203.0.113.10/32"
+    display_name = "admin-workstation"
+  },
+]
+
+# Keep this true outside disposable development environments.
+deletion_protection = true

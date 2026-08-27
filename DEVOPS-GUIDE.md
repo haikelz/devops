@@ -225,7 +225,7 @@ The dominant IaC tool. HashiCorp Terraform (or OpenTofu).
 
 **Cost Note**: The VPC + EC2 exercise costs ~$5-10/month if left running. ALWAYS `terraform destroy` after exercises. Set an AWS Budget Alert before provisioning anything.
 
-**Repo Reference**: This repo has working GCP Terraform at `terraform/`. Read `main.tf` for provider + bucket, `gke.tf` for GKE cluster, `variables.tf` for parameterization.
+**Repo Reference**: This repo has a GCP GKE Terraform root at `terraform/`. Read `main.tf` for the provider, VPC, and Cloud NAT; `gke.tf` for the regional GKE cluster and node pool; and `variables.tf` for parameterization.
 
 ### 2.2 Infrastructure Testing
 
