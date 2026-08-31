@@ -62,12 +62,35 @@ case "$app_name" in
     ;;
   ryuko-matoi-go)
     required_vars=(IMAGE REMOVE_BG_API_KEY AI_API_KEY AI_PROVIDER AI_MODEL WHATSAPP_SESSION_PATH WHATSAPP_DATABASE_DIALECT WHATSAPP_EVENT_BUFFER_SIZE)
+    : "${REMOVE_BG_API_URL:=}"
+    : "${JOKES_API_URL:=}"
+    : "${ANIME_QUOTE_API_URL:=}"
+    : "${DISTRO_INFO_API_URL:=}"
+    : "${DOA_API_URL:=}"
+    : "${QURAN_API_URL:=}"
+    : "${IMAGE_API_URL:=}"
+    : "${ASMAUL_HUSNA_API_URL:=}"
+    : "${APP_NAME:=ryuko-matoi}"
+    : "${APP_ENV:=production}"
+    : "${TZ:=Asia/Jakarta}"
+    : "${LOG_LEVEL:=info}"
+    : "${LOG_DIR:=/app/logs}"
+    : "${WHATSAPP_DEVICE_NAME:=RyukoMatoi}"
+    : "${OCR_PROVIDER:=}"
+    : "${OCR_LANGUAGE:=}"
+    : "${OCR_BINARY:=}"
+    : "${BRAT_FONT_PATH:=}"
+    export REMOVE_BG_API_URL JOKES_API_URL ANIME_QUOTE_API_URL DISTRO_INFO_API_URL DOA_API_URL QURAN_API_URL IMAGE_API_URL ASMAUL_HUSNA_API_URL APP_NAME APP_ENV TZ LOG_LEVEL LOG_DIR WHATSAPP_DEVICE_NAME OCR_PROVIDER OCR_LANGUAGE OCR_BINARY BRAT_FONT_PATH
     k8s_dir="ryuko-matoi-go"
     apply_order=(argocd-application)
     has_clusterissuer=0
+    secret_name="ryuko-matoi-env"
+    secret_namespace="bots"
+    secret_vars=(REMOVE_BG_API_KEY REMOVE_BG_API_URL JOKES_API_URL ANIME_QUOTE_API_URL DISTRO_INFO_API_URL DOA_API_URL QURAN_API_URL IMAGE_API_URL ASMAUL_HUSNA_API_URL AI_PROVIDER AI_API_KEY AI_MODEL APP_NAME APP_ENV TZ LOG_LEVEL LOG_DIR WHATSAPP_SESSION_PATH WHATSAPP_DEVICE_NAME WHATSAPP_DATABASE_DIALECT WHATSAPP_EVENT_BUFFER_SIZE OCR_PROVIDER OCR_LANGUAGE OCR_BINARY BRAT_FONT_PATH)
     ;;
   ai-assistant)
     required_vars=(IMAGE AI_PROVIDER AI_MODEL TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID)
+    : "${WHATSAPP_RECIPIENT:=}"
     : "${JOB_ALERT_PIPELINE_ENABLED:=true}"
     : "${GLINTS_ENABLED:=true}"
     : "${LINKEDIN_ENABLED:=false}"
@@ -81,14 +104,22 @@ case "$app_name" in
     : "${JOB_ALERT_MAX_QUERIES:=5}"
     : "${JOB_ALERT_AI_BATCH_SIZE:=5}"
     : "${JOB_ALERT_MIN_MATCH_SCORE:=1}"
-    export JOB_ALERT_PIPELINE_ENABLED GLINTS_ENABLED LINKEDIN_ENABLED
+    : "${MAIL_MAILER:=}"
+    : "${MAIL_USERNAME:=}"
+    : "${MAIL_PASSWORD:=}"
+    : "${MAIL_HOST:=}"
+    : "${MAIL_PORT:=}"
+    : "${MAIL_ENCRYPTION:=}"
+    : "${MAIL_FROM:=}"
+    export WHATSAPP_RECIPIENT JOB_ALERT_PIPELINE_ENABLED GLINTS_ENABLED LINKEDIN_ENABLED
     export LINKEDIN_PAGES LINKEDIN_MAX_DETAILS LINKEDIN_POSTED_WITHIN_HOURS
     export LINKEDIN_DISTANCE LINKEDIN_JOB_TYPES LINKEDIN_COMPANY_IDS JOB_ALERT_DB_PATH
     export JOB_ALERT_MAX_QUERIES JOB_ALERT_AI_BATCH_SIZE JOB_ALERT_MIN_MATCH_SCORE
+    export MAIL_MAILER MAIL_USERNAME MAIL_PASSWORD MAIL_HOST MAIL_PORT MAIL_ENCRYPTION MAIL_FROM
     case "${AI_PROVIDER:-}" in
-      sumopod) required_vars+=(SUMOPOD_API_KEY) ;;
-      google) required_vars+=(GOOGLE_API_KEY) ;;
-      openai) required_vars+=(OPENAI_API_KEY) ;;
+      sumopod) required_vars+=(SUMOPOD_API_KEY) ; : "${SUMOPOD_API_KEY:=}" ; export SUMOPOD_API_KEY ;;
+      google) required_vars+=(GOOGLE_API_KEY) ; : "${GOOGLE_API_KEY:=}" ; export GOOGLE_API_KEY ;;
+      openai) required_vars+=(OPENAI_API_KEY) ; : "${OPENAI_API_KEY:=}" ; export OPENAI_API_KEY ;;
       *)
         echo "AI_PROVIDER must be sumopod, google, or openai." >&2
         exit 1
@@ -106,8 +137,11 @@ case "$app_name" in
       fi
     fi
     k8s_dir="ai-assistant"
-    apply_order=(pvc secret services network-policy deployment)
+    apply_order=(argocd-application)
     has_clusterissuer=0
+    secret_name="ai-assistant-env"
+    secret_namespace="bots"
+    secret_vars=(IMAGE AI_PROVIDER AI_MODEL TELEGRAM_BOT_TOKEN TELEGRAM_USER_ID WHATSAPP_RECIPIENT JOB_ALERT_PIPELINE_ENABLED GLINTS_ENABLED LINKEDIN_ENABLED LINKEDIN_PAGES LINKEDIN_MAX_DETAILS LINKEDIN_POSTED_WITHIN_HOURS LINKEDIN_DISTANCE LINKEDIN_JOB_TYPES LINKEDIN_COMPANY_IDS JOB_ALERT_DB_PATH JOB_ALERT_MAX_QUERIES JOB_ALERT_AI_BATCH_SIZE JOB_ALERT_MIN_MATCH_SCORE MAIL_MAILER MAIL_USERNAME MAIL_PASSWORD MAIL_HOST MAIL_PORT MAIL_ENCRYPTION MAIL_FROM MAIL_TO SUMOPOD_API_KEY GOOGLE_API_KEY OPENAI_API_KEY)
     ;;
   argocd)
     required_vars=(DOMAIN EMAIL)
@@ -150,6 +184,27 @@ render_apply() {
   envsubst < "$1" | kubectl apply -f -
 }
 
+# Create k8s secret
+create_k8s_secret() {
+  local secret_name="$1"
+  local secret_namespace="$2"
+  shift 2
+  local -a vars=("$@")
+
+  echo "  Creating/updating Secret '$secret_name' in namespace '$secret_namespace'..."
+  kubectl create namespace "$secret_namespace" --dry-run=client -o yaml | kubectl apply -f -
+
+  local -a literal_args=()
+  for var in "${vars[@]}"; do
+    local val="${!var:-}"
+    literal_args+=("--from-literal=${var}=${val}")
+  done
+
+  kubectl create secret generic "$secret_name" -n "$secret_namespace" \
+    "${literal_args[@]}" \
+    --dry-run=client -o yaml | kubectl apply -f -
+}
+
 # Apply
 k8s_path="$SCRIPT_DIR"
 
@@ -190,6 +245,10 @@ if [[ "$app_name" == "argocd" ]]; then
 fi
 
 cd "$k8s_path/$k8s_dir"
+
+if [[ -n "${secret_name:-}" && -n "$secret_vars:-}" && ${#secret_vars[@]} -gt 0 ]]; then
+  create_k8s_secret "$secret_name" "${secret_namespace:-default}" "${secret_vars[@]}"
+fi
 
 for resource in "${apply_order[@]}"; do
   file="${resource}.yaml"
