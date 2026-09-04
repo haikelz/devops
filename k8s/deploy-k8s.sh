@@ -48,6 +48,17 @@ case "$app_name" in
     apply_order=(pvc secret services network-policy deployment)
     has_clusterissuer=1
     ;;
+  gtcd)
+    required_vars=(DOMAIN EMAIL IMAGE GOATCOUNTER_URL GOATCOUNTER_API_KEY SESSION_SECRET)
+    : "${REDIS_URL:=}"
+    export REDIS_URL
+    k8s_dir="gtcd"
+    apply_order=(secret services deployment ingress)
+    has_clusterissuer=1
+    secret_name="gtcd-env"
+    secret_namespace="default"
+    secret_vars=(DOMAIN GOATCOUNTER_URL GOATCOUNTER_API_KEY SESSION_SECRET REDIS_URL)
+    ;;
   mazanoke)
     required_vars=(DOMAIN EMAIL IMAGE)
     k8s_dir="mazanoke"
@@ -150,7 +161,7 @@ case "$app_name" in
     has_clusterissuer=1
     ;;
   ekel-backend)
-    required_vars=(DOMAIN IMAGE WAKATIME_API_URL WAKATIME_API_KEY TURSO_AUTH_TOKEN TURSO_DATABASE_URL ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER)
+    required_vars=(DOMAIN IMAGE WAKATIME_API_URL WAKATIME_API_KEY TURSO_AUTH_TOKEN TURSO_DATABASE_URL ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER APP_ENV APP_DEBUG PORT)
     k8s_dir="ekel-backend"
     apply_order=(secret services deployment ingress)
     has_clusterissuer=1

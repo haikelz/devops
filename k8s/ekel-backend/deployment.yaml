@@ -15,10 +15,10 @@ spec:
         app: ekel-backend
     spec:
       securityContext:
-        runAsNonRoot: true 
+        runAsNonRoot: true
         runAsUser: 65334
         runAsGroup: 65334
-        fsGroup: 65334 
+        fsGroup: 65334
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
@@ -27,7 +27,7 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
-            capabilites:
+            capabilities:
               drop:
                 - ALL
           image: ${IMAGE}
@@ -38,11 +38,11 @@ spec:
               name: http
           env:
             - name: PORT
-              value: "9090"
+              value: ${PORT}
             - name: APP_ENV
-              value: "production"
+              value: ${APP_ENV}
             - name: APP_DEBUG
-              value: "false"
+              value: ${APP_DEBUG}
             - name: WAKATIME_API_URL
               valueFrom:
                 secretKeyRef:
