@@ -24,14 +24,6 @@ spec:
                 name: goatcounter
                 port:
                   number: 8080
-          # GoatCounter admin UI (optional)
-          - path: /admin
-            pathType: Prefix
-            backend:
-              service:
-                name: goatcounter
-                port:
-                  number: 8080
           - path: /
             pathType: Prefix
             backend:
