@@ -52,6 +52,9 @@ case "$app_name" in
     secret_name="gtcd-env"
     secret_namespace="default"
     secret_vars=(DOMAIN GOATCOUNTER_URL GOATCOUNTER_API_KEY SESSION_SECRET REDIS_URL)
+    # Secret updates do not restart pods and env vars are read at container
+    # start, so the deployment must be rolled after every deploy.
+    restart_deployment="gtcd"
     ;;
   mazanoke)
     required_vars=(DOMAIN EMAIL IMAGE)
@@ -265,6 +268,13 @@ for resource in "${apply_order[@]}"; do
     fi
   fi
 done
+
+# A Secret update alone never restarts pods, and env vars are only read at
+# container start — roll the app so it picks up the current Secret values.
+if [[ -n "${restart_deployment:-}" ]]; then
+  echo "  Restarting deployment/${restart_deployment} to pick up current Secret..."
+  kubectl rollout restart "deployment/${restart_deployment}"
+fi
 
 echo ""
 echo "  Done: $app_name deployed."
