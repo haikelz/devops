@@ -42,18 +42,12 @@ fi
 
 # App config
 case "$app_name" in
-  goatcounter)
-    required_vars=(DOMAIN EMAIL IMAGE PASSWORD)
-    k8s_dir="goatcounter"
-    apply_order=(pvc secret services network-policy deployment)
-    has_clusterissuer=1
-    ;;
   gtcd)
     required_vars=(DOMAIN EMAIL IMAGE GOATCOUNTER_URL GOATCOUNTER_API_KEY SESSION_SECRET)
     : "${REDIS_URL:=}"
     export REDIS_URL
     k8s_dir="gtcd"
-    apply_order=(secret services deployment ingress)
+    apply_order=(services middleware goatcounter redis deployment ingress)
     has_clusterissuer=1
     secret_name="gtcd-env"
     secret_namespace="default"

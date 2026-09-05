@@ -1,23 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: goatcounter
+  name: gtcd
+  labels:
+    app: gtcd
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: goatcounter
+      app: gtcd
   template:
     metadata:
       labels:
-        app: goatcounter
+        app: gtcd
     spec:
-      terminationGracePeriodSeconds: 60
+      terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101
-        runAsGroup: 101
-        fsGroup: 101
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
@@ -27,75 +29,87 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              app: goatcounter
-      enableServiceLinks: false
-      initContainers:
-        - name: init-goatcounter
-          image: ${IMAGE}
-          command:
-            - sh
-            - -c
-            - |
-              if [ ! -f /data/goatcounter.sqlite3 ]; then
-              goatcounter db create site \
-                -createdb \
-                -db sqlite3+/data/goatcounter.sqlite3 \
-                -vhost ${DOMAIN} \
-                -user.email ${EMAIL} \
-                -user.password ${PASSWORD}
-              fi
-          env:
-            - name: DOMAIN
-              valueFrom:
-                secretKeyRef:
-                  name: goatcounter-env
-                  key: DOMAIN
-            - name: EMAIL
-              valueFrom:
-                secretKeyRef:
-                  name: goatcounter-env
-                  key: EMAIL
-            - name: PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: goatcounter-env
-                  key: PASSWORD
-          volumeMounts:
-            - name: goatcounter-data
-              mountPath: /data
+              app: gtcd
       containers:
-        - name: goatcounter
-          image: ${IMAGE}
-          args:
-            - serve
-            - -listen
-            - :3000
-            - -tls
-            - none
-            - -db
-            - sqlite3+/data/goatcounter.sqlite3
-            - -automigrate
-            - -email-from
-            - ${EMAIL}
+        - name: gtcd
+          # Overridden by the `images` transformer in kustomization.yaml;
+          # use `kustomize edit set image gtcd=<registry>/<image>@<digest>`
+          # to deploy a specific build.
+          image: gtcd
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
+              name: http
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3000"
+            - name: HOST
+              value: "0.0.0.0"
+            - name: NODE_ENV
+              value: "production"
+            # Derive the public origin from the ingress proxy headers so CSRF
+            # origin checks and cookie flags work behind TLS and non-TLS
+            # ingress without per-domain ORIGIN configuration.
+            - name: PROTOCOL_HEADER
+              value: x-forwarded-proto
+            - name: HOST_HEADER
+              value: host
+            - name: GOATCOUNTER_URL
+              valueFrom:
+                secretKeyRef:
+                  name: gtcd-env
+                  key: GOATCOUNTER_URL
+            - name: GOATCOUNTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gtcd-env
+                  key: GOATCOUNTER_API_KEY
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: gtcd-env
+                  key: REDIS_URL
+                  optional: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "300m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+          startupProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 5
+            failureThreshold: 12
+            timeoutSeconds: 3
           volumeMounts:
-            - name: goatcounter-data
-              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
               drop:
-                - ALL 
-          resources:
-            requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
-              cpu: 300m 
-              memory: 128Mi
+                - ALL
       volumes:
-        - name: goatcounter-data
-          persistentVolumeClaim:
-            claimName: goatcounter-data
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 32Mi
