@@ -23,13 +23,6 @@ spec:
         fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
-          labelSelector:
-            matchLabels:
-              app: gtcd
       containers:
         - name: gtcd
           image: ${IMAGE}
@@ -62,11 +55,7 @@ spec:
                   name: gtcd-env
                   key: GOATCOUNTER_API_KEY
             - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: gtcd-env
-                  key: REDIS_URL
-                  optional: true
+              value: redis://redis:6379
           resources:
             requests:
               cpu: "50m"
