@@ -43,15 +43,13 @@ fi
 # App config
 case "$app_name" in
   gtcd)
-    required_vars=(DOMAIN EMAIL IMAGE GOATCOUNTER_URL GOATCOUNTER_API_KEY)
+    required_vars=(DOMAIN EMAIL IMAGE GOATCOUNTER_URL GOATCOUNTER_API_KEY GTCD_ADMIN_EMAILS)
     k8s_dir="gtcd"
     apply_order=(services goatcounter redis deployment ingress)
     has_clusterissuer=1
     secret_name="gtcd-env"
     secret_namespace="default"
     secret_vars=(GOATCOUNTER_URL GOATCOUNTER_API_KEY)
-    # Secret updates do not restart pods and env vars are read at container
-    # start, so the deployment must be rolled after every deploy.
     restart_deployment="gtcd"
     ;;
   mazanoke)
