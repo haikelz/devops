@@ -53,8 +53,8 @@ echo "User id: ${USER_ID}"
 # unrelated token, while the permission update below targets gtcd-dashboard.
 find_dashboard_token_id() {
   kubectl exec deploy/goatcounter -- goatcounter db query \
-    "SELECT id FROM api_tokens WHERE name='gtcd-dashboard' ORDER BY id LIMIT 1" \
-    -format json 2>/dev/null \
+    "SELECT api_token_id AS id FROM api_tokens WHERE name='gtcd-dashboard' ORDER BY api_token_id LIMIT 1" \
+    -format json \
     | tr -d '\n\t\r ' \
     | grep -o '"id":[0-9]*' \
     | head -1 \
@@ -66,7 +66,7 @@ fetch_token() {
   local token_id="$1"
 
   kubectl exec deploy/goatcounter -- goatcounter db show apitoken \
-    -find "$token_id" -format json 2>/dev/null \
+    -find "$token_id" -format json \
     | tr -d '\n\t\r ' \
     | grep -o '"token":"[^"]*"' \
     | head -1 \
@@ -95,7 +95,7 @@ fi
 # The CLI cannot grant the 'stats' bit. Apply the complete permission set on
 # every bootstrap run so an existing token cannot remain stats-only.
 kubectl exec deploy/goatcounter -- goatcounter db query \
-  "UPDATE api_tokens SET permissions='127' WHERE id=$TOKEN_ID" \
+  "UPDATE api_tokens SET permissions='127' WHERE api_token_id=$TOKEN_ID" \
   -format exec
 
 TOKEN=$(fetch_token "$TOKEN_ID")
