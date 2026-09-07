@@ -49,20 +49,33 @@ USER_ID=$(kubectl exec deploy/goatcounter -- goatcounter db query \
 USER_ID="${USER_ID:-1}"
 echo "User id: ${USER_ID}"
 
-# Reuse an existing token so repeated runs do not pile up duplicates.
+# Reuse the dashboard token by name. Selecting token ID 1 can return an older,
+# unrelated token, while the permission update below targets gtcd-dashboard.
+find_dashboard_token_id() {
+  kubectl exec deploy/goatcounter -- goatcounter db query \
+    "SELECT id FROM api_tokens WHERE name='gtcd-dashboard' ORDER BY id LIMIT 1" \
+    -format json 2>/dev/null \
+    | tr -d '\n\t\r ' \
+    | grep -o '"id":[0-9]*' \
+    | head -1 \
+    | cut -d: -f2 || true
+}
+
 # `db show apitoken -format json` prints pretty-printed JSON; compact it first.
 fetch_token() {
+  local token_id="$1"
+
   kubectl exec deploy/goatcounter -- goatcounter db show apitoken \
-    -find 1 -format json 2>/dev/null \
+    -find "$token_id" -format json 2>/dev/null \
     | tr -d '\n\t\r ' \
     | grep -o '"token":"[^"]*"' \
     | head -1 \
     | cut -d'"' -f4 || true
 }
 
-TOKEN=$(fetch_token)
+TOKEN_ID=$(find_dashboard_token_id)
 
-if [[ -n "$TOKEN" ]]; then
+if [[ -n "$TOKEN_ID" ]]; then
   echo "Reusing existing API token."
 else
   echo "Creating API token..."
@@ -71,16 +84,24 @@ else
     -user "$USER_ID" \
     -perm "count,export,site_read,site_create,site_update"
 
-  # The CLI cannot grant the 'stats' bit; set all permission bits directly.
-  kubectl exec deploy/goatcounter -- goatcounter db query \
-    "UPDATE api_tokens SET permissions='127' WHERE name='gtcd-dashboard'" \
-    -format exec
-
-  TOKEN=$(fetch_token)
+  TOKEN_ID=$(find_dashboard_token_id)
 fi
 
-if [[ -z "$TOKEN" ]]; then
+if [[ -z "$TOKEN_ID" ]]; then
   echo "Could not obtain an API token; .env was NOT modified." >&2
+  exit 1
+fi
+
+# The CLI cannot grant the 'stats' bit. Apply the complete permission set on
+# every bootstrap run so an existing token cannot remain stats-only.
+kubectl exec deploy/goatcounter -- goatcounter db query \
+  "UPDATE api_tokens SET permissions='127' WHERE id=$TOKEN_ID" \
+  -format exec
+
+TOKEN=$(fetch_token "$TOKEN_ID")
+
+if [[ -z "$TOKEN" ]]; then
+  echo "Could not read the gtcd-dashboard API token; .env was NOT modified." >&2
   exit 1
 fi
 
