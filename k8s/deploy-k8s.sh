@@ -49,7 +49,12 @@ case "$app_name" in
     has_clusterissuer=1
     secret_name="gtcd-env"
     secret_namespace="default"
-    secret_vars=(GOATCOUNTER_URL GOATCOUNTER_API_KEY)
+    secret_vars=(
+      GOATCOUNTER_URL
+      GOATCOUNTER_API_KEY
+      GTCD_ADMIN_EMAILS
+      GOATCOUNTER_ADMIN_URL
+    )
     restart_deployment="gtcd"
     ;;
   mazanoke)
