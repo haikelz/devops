@@ -21,9 +21,14 @@ spec:
         - name: picoclaw-data
           persistentVolumeClaim:
             claimName: ai-assistant-data
+        - name: vps-ssh
+          secret:
+            secretName: ai-assistant-vps-ssh
+            optional: true
+            defaultMode: 0400
       initContainers:
         - name: initialize-workspace
-          image: ${IMAGE}
+          image: haikelilham/ai-assistant
           imagePullPolicy: Always
           command: ["/bin/sh", "-ec"]
           args:
@@ -32,44 +37,231 @@ spec:
               if [ ! -f /root/.picoclaw/workspace/SOUL.md ]; then cp -R /seed/workspace /root/.picoclaw/workspace; fi
               mkdir -p /root/.picoclaw/workspace/skills/job-search
               cp /seed/workspace/skills/job-search/SKILL.md /root/.picoclaw/workspace/skills/job-search/SKILL.md
+              mkdir -p /root/.picoclaw/workspace/skills/vps-ops
+              cp /seed/workspace/skills/vps-ops/SKILL.md /root/.picoclaw/workspace/skills/vps-ops/SKILL.md
               CLEAN_BOT_TOKEN=$(printenv TELEGRAM_BOT_TOKEN | tr -d '\r\n')
               printf 'channels:\n  telegram:\n    settings:\n      token: "%s"\n' "$CLEAN_BOT_TOKEN" > /root/.picoclaw/.security.yml
-              chmod 600 /root/.picoclaw/.security.yml
-          envFrom:
-            - secretRef:
-                name: ai-assistant-env
+          env:
+            - name: AI_PROVIDER
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: AI_PROVIDER
+            - name: AI_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: AI_MODEL
+            - name: SUMOPOD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: SUMOPOD_API_KEY
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: GOOGLE_API_KEY
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: OPENAI_API_KEY
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: TELEGRAM_USER_ID
           volumeMounts:
             - name: picoclaw-data
               mountPath: /root/.picoclaw
         - name: initialize-paycheck-reminder
-          image: ${IMAGE}
+          image: haikelilham/ai-assistant
           imagePullPolicy: Always
           command: ["/bin/sh", "-ec"]
           args:
             - |
-              CLEAN_USER_ID=$(printenv TELEGRAM_USER_ID | tr -d '\r\n')
-              if ! picoclaw cron list 2>/dev/null | grep -Fq monthly-paycheck-reminder; then
-                picoclaw cron add --name monthly-paycheck-reminder --cron "0 9 28 * *" --channel telegram --to "$CLEAN_USER_ID" --message "Today is the 28th in Asia/Jakarta. Ask the user for their payday amount in rupiah. When they give a clear amount, record it as Modal through the finance-ledger skill and confirm the total money." || true
+              if ! picoclaw cron list | grep -Fq monthly-paycheck-reminder; then
+                picoclaw cron add --name monthly-paycheck-reminder --cron "0 9 28 * *" --channel telegram --to "$(printenv TELEGRAM_USER_ID)" --message "Today is the 28th in Asia/Jakarta. Ask the user for their payday amount in rupiah. When they give a clear amount, record it as Modal through the finance-ledger skill and confirm the total money."
               fi
           env:
             - name: TZ
               value: Asia/Jakarta
-          envFrom:
-            - secretRef:
-                name: ai-assistant-env
+            - name: TELEGRAM_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: TELEGRAM_USER_ID
           volumeMounts:
             - name: picoclaw-data
               mountPath: /root/.picoclaw
       containers:
         - name: picoclaw
-          image: ${IMAGE}
+          image: haikelilham/ai-assistant:latest
           imagePullPolicy: Always
           env:
             - name: TZ
               value: Asia/Jakarta
-          envFrom:
-            - secretRef:
-                name: ai-assistant-env
+            - name: AI_PROVIDER
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: AI_PROVIDER
+            - name: AI_MODEL
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: AI_MODEL
+            - name: SUMOPOD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: SUMOPOD_API_KEY
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: GOOGLE_API_KEY
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: OPENAI_API_KEY
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_USER_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: TELEGRAM_USER_ID
+            - name: WHATSAPP_RECIPIENT
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: WHATSAPP_RECIPIENT
+            - name: JOB_ALERT_PIPELINE_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: JOB_ALERT_PIPELINE_ENABLED
+            - name: GLINTS_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: GLINTS_ENABLED
+            - name: LINKEDIN_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: LINKEDIN_ENABLED
+            - name: LINKEDIN_PAGES
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: LINKEDIN_PAGES
+            - name: LINKEDIN_MAX_DETAILS
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: LINKEDIN_MAX_DETAILS
+            - name: LINKEDIN_POSTED_WITHIN_HOURS
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: LINKEDIN_POSTED_WITHIN_HOURS
+            - name: LINKEDIN_DISTANCE
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: LINKEDIN_DISTANCE
+            - name: LINKEDIN_JOB_TYPES
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: LINKEDIN_JOB_TYPES
+            - name: LINKEDIN_COMPANY_IDS
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: LINKEDIN_COMPANY_IDS
+            - name: JOB_ALERT_DB_PATH
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: JOB_ALERT_DB_PATH
+            - name: JOB_ALERT_MAX_QUERIES
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: JOB_ALERT_MAX_QUERIES
+            - name: JOB_ALERT_AI_BATCH_SIZE
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: JOB_ALERT_AI_BATCH_SIZE
+            - name: JOB_ALERT_MIN_MATCH_SCORE
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: JOB_ALERT_MIN_MATCH_SCORE
+            - name: MAIL_MAILER
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_MAILER
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_PASSWORD
+            - name: MAIL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_HOST
+            - name: MAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_PORT
+            - name: MAIL_ENCRYPTION
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_ENCRYPTION
+            - name: MAIL_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_FROM
+            - name: MAIL_TO
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: MAIL_TO
+            - name: STARCO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: STARCO_USERNAME
+            - name: STARCO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ai-assistant-env
+                  key: STARCO_PASSWORD
           ports:
             - name: http
               containerPort: 18790
@@ -95,3 +287,6 @@ spec:
           volumeMounts:
             - name: picoclaw-data
               mountPath: /root/.picoclaw
+            - name: vps-ssh
+              mountPath: /run/secrets/vps-ssh
+              readOnly: true
