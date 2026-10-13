@@ -64,7 +64,11 @@ case "$app_name" in
       GTCD_PUBLIC_URL
       TURNSTILE_SITE_KEY
       TURNSTILE_SECRET_KEY
+      ADDRESS_HEADER
+      XFF_DEPTH
     )
+    # adapter-node reads an empty XFF_DEPTH as NaN, so give it a value.
+    : "${XFF_DEPTH:=1}"
     restart_deployment="gtcd"
     ;;
   mazanoke)
