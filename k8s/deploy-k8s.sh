@@ -55,6 +55,15 @@ case "$app_name" in
       GTCD_ADMIN_EMAILS
       GOATCOUNTER_ADMIN_URL
       REDIS_PASSWORD
+      SMTP_HOST
+      SMTP_PORT
+      SMTP_SECURE
+      SMTP_USER
+      SMTP_PASSWORD
+      SMTP_FROM
+      GTCD_PUBLIC_URL
+      TURNSTILE_SITE_KEY
+      TURNSTILE_SECRET_KEY
     )
     restart_deployment="gtcd"
     ;;
