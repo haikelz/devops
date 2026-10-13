@@ -43,7 +43,7 @@ fi
 # App config
 case "$app_name" in
   gtcd)
-    required_vars=(DOMAIN EMAIL IMAGE GOATCOUNTER_URL GOATCOUNTER_API_KEY GTCD_ADMIN_EMAILS)
+    required_vars=(DOMAIN EMAIL IMAGE GOATCOUNTER_URL GOATCOUNTER_API_KEY GTCD_ADMIN_EMAILS REDIS_PASSWORD)
     k8s_dir="gtcd"
     apply_order=(services goatcounter redis deployment ingress)
     has_clusterissuer=1
@@ -54,6 +54,16 @@ case "$app_name" in
       GOATCOUNTER_API_KEY
       GTCD_ADMIN_EMAILS
       GOATCOUNTER_ADMIN_URL
+      REDIS_PASSWORD
+      SMTP_HOST
+      SMTP_PORT
+      SMTP_SECURE
+      SMTP_USER
+      SMTP_PASSWORD
+      SMTP_FROM
+      GTCD_PUBLIC_URL
+      TURNSTILE_SITE_KEY
+      TURNSTILE_SECRET_KEY
     )
     restart_deployment="gtcd"
     ;;
@@ -184,6 +194,13 @@ for var in "${required_vars[@]}"; do
   fi
 done
 
+# gtcd: the Redis password goes into both redis.conf and gtcd's REDIS_URL, so
+# keep it to characters that need no escaping in either.
+if [[ "$app_name" == "gtcd" && ! "$REDIS_PASSWORD" =~ ^[A-Za-z0-9]{16,}$ ]]; then
+  echo "REDIS_PASSWORD must be 16+ letters and digits (try: openssl rand -hex 32)." >&2
+  exit 1
+fi
+
 # render_apply
 render_apply() {
   if envsubst < "$1" | grep -q '\${'; then
@@ -257,6 +274,23 @@ cd "$k8s_path/$k8s_dir"
 
 if [[ -n "${secret_name:-}" && "${#secret_vars[@]}" -gt 0 ]]; then
   create_k8s_secret "$secret_name" "${secret_namespace:-default}" "${secret_vars[@]}"
+fi
+
+# gtcd: Redis loads requirepass from this Secret, mounted as
+# /run/secrets/redis.conf. The checksum annotation restarts Redis only when the
+# config changes, so a routine deploy does not drop every session.
+if [[ "$app_name" == "gtcd" ]]; then
+  redis_conf="$(printf 'requirepass %s\nsave ""\nappendonly no\n' "$REDIS_PASSWORD")"
+  echo "  Creating/updating Secret 'redis-config'..."
+  kubectl create secret generic redis-config \
+    --from-literal=redis.conf="$redis_conf" \
+    --dry-run=client -o yaml | kubectl apply -f -
+  if command -v sha256sum >/dev/null 2>&1; then
+    REDIS_CONFIG_SHA="$(printf '%s' "$redis_conf" | sha256sum | cut -c1-16)"
+  else
+    REDIS_CONFIG_SHA="$(printf '%s' "$redis_conf" | shasum -a 256 | cut -c1-16)"
+  fi
+  export REDIS_CONFIG_SHA
 fi
 
 for resource in "${apply_order[@]}"; do
