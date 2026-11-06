@@ -319,6 +319,15 @@ for resource in "${apply_order[@]}"; do
   fi
 done
 
+# gtcd: metrics scrape target, only where the Prometheus Operator is installed.
+if [[ "$app_name" == "gtcd" ]]; then
+  if kubectl api-resources --api-group=monitoring.coreos.com 2>/dev/null | grep -q podmonitors; then
+    kubectl apply -f podmonitor.yaml
+  else
+    echo "  Prometheus Operator CRDs not found - skipping PodMonitor; metrics stay on :9090." >&2
+  fi
+fi
+
 # A Secret update alone never restarts pods, and env vars are only read at
 # container start — roll the app so it picks up the current Secret values.
 if [[ -n "${restart_deployment:-}" ]]; then
