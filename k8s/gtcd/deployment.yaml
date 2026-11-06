@@ -156,13 +156,16 @@ spec:
                   key: REDIS_PASSWORD
             - name: REDIS_URL
               value: redis://:$(REDIS_PASSWORD)@redis:6379
+          # Watt keeps its runtime and a worker thread, each with its own V8
+          # heap: measured ~210Mi idle and ~220Mi peak over concurrent report
+          # loads, against ~90Mi for adapter-node alone.
           resources:
             requests:
               cpu: "50m"
-              memory: "64Mi"
+              memory: "256Mi"
             limits:
               cpu: "300m"
-              memory: "128Mi"
+              memory: "384Mi"
           livenessProbe:
             httpGet:
               path: /api/health
