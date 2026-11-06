@@ -187,6 +187,7 @@ case "$app_name" in
     # --from-literal keeps every value a string, whatever characters it holds.
     secret_name="ekel-backend-env"
     secret_vars=(WAKATIME_API_URL WAKATIME_ACCESS_TOKEN TURSO_DATABASE_URL TURSO_AUTH_TOKEN ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER)
+    restart_deployment="ekel-backend"
     ;;
   beszel)
     required_vars=(DOMAIN EMAIL IMAGE KEY TOKEN)
