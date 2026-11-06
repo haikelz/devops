@@ -73,6 +73,9 @@ case "$app_name" in
     # GoatCounter picks the site by Host. The documented bootstrap creates the
     # site with -vhost $DOMAIN, so calls without a site of their own use that.
     : "${GOATCOUNTER_VHOST:=$DOMAIN}"
+    # API calls a second: the in-cluster GoatCounter's -ratelimit and gtcd's
+    # pacing (goatcounter.yaml, deployment.yaml). Use 4 for goatcounter.com.
+    export GOATCOUNTER_API_RATE="${GOATCOUNTER_API_RATE:-20}"
     restart_deployment="gtcd"
     ;;
   mazanoke)
@@ -206,6 +209,10 @@ done
 # keep it to characters that need no escaping in either.
 if [[ "$app_name" == "gtcd" && ! "$REDIS_PASSWORD" =~ ^[A-Za-z0-9]{16,}$ ]]; then
   echo "REDIS_PASSWORD must be 16+ letters and digits (try: openssl rand -hex 32)." >&2
+  exit 1
+fi
+if [[ "$app_name" == "gtcd" && ! "$GOATCOUNTER_API_RATE" =~ ^[1-9][0-9]*$ ]]; then
+  echo "GOATCOUNTER_API_RATE must be a whole number of requests a second." >&2
   exit 1
 fi
 
