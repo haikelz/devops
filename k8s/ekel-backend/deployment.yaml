@@ -48,11 +48,11 @@ spec:
                 secretKeyRef:
                   name: ekel-backend-env
                   key: WAKATIME_API_URL
-            - name: WAKATIME_API_KEY
+            - name: WAKATIME_ACCESS_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: ekel-backend-env
-                  key: WAKATIME_API_KEY
+                  key: WAKATIME_ACCESS_TOKEN
             - name: TURSO_AUTH_TOKEN
               valueFrom:
                 secretKeyRef:
