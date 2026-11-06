@@ -23,6 +23,15 @@ spec:
                 name: goatcounter
                 port:
                   number: 8080
+          # Tracking script from this instance instead of GoatCounter's CDN.
+          # Prefix /count matches whole path segments, not /count.js.
+          - path: /count.js
+            pathType: Exact
+            backend:
+              service:
+                name: goatcounter
+                port:
+                  number: 8080
           # GoatCounter public visitor counter (only answers when enabled)
           - path: /counter/
             pathType: Prefix
