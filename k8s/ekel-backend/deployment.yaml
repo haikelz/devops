@@ -38,11 +38,11 @@ spec:
               name: http
           env:
             - name: PORT
-              value: ${PORT}
+              value: "${PORT}"
             - name: APP_ENV
-              value: ${APP_ENV}
+              value: "${APP_ENV}"
             - name: APP_DEBUG
-              value: ${APP_DEBUG}
+              value: "${APP_DEBUG}"
             - name: WAKATIME_API_URL
               valueFrom:
                 secretKeyRef:

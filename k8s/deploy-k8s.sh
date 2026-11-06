@@ -182,8 +182,11 @@ case "$app_name" in
   ekel-backend)
     required_vars=(DOMAIN IMAGE WAKATIME_API_URL WAKATIME_ACCESS_TOKEN TURSO_AUTH_TOKEN TURSO_DATABASE_URL ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER APP_ENV APP_DEBUG PORT)
     k8s_dir="ekel-backend"
-    apply_order=(secret services deployment ingress)
+    apply_order=(services deployment ingress)
     has_clusterissuer=1
+    # --from-literal keeps every value a string, whatever characters it holds.
+    secret_name="ekel-backend-env"
+    secret_vars=(WAKATIME_API_URL WAKATIME_ACCESS_TOKEN TURSO_DATABASE_URL TURSO_AUTH_TOKEN ADMIN_PASSWORD ADMIN_EMAIL JWT_SECRET IHSG_API_URL SECRET_KEY_ADMIN SECRET_KEY_CUSTOMER)
     ;;
   beszel)
     required_vars=(DOMAIN EMAIL IMAGE KEY TOKEN)
