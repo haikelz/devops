@@ -31,10 +31,6 @@ spec:
             - containerPort: 3000
               name: http
               protocol: TCP
-            # Prometheus metrics from Watt; podmonitor.yaml scrapes it.
-            - containerPort: 9090
-              name: metrics
-              protocol: TCP
           env:
             - name: PORT
               value: "3000"
